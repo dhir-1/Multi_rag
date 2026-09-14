@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Corpus — Academic RAG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #F3F1EC;
+      --ink: #1A1A1F;
+      --muted: #6B6A63;
+      --faint: rgba(26, 26, 31, 0.12);
+      --accent: #4B4468;
+      --evidence: #4e5b43;
+      --caution: #8c6d32;
+      --void: #8C4A3A;
+    }
+
+    body.midnight-mode {
+      --bg: #121216;
+      --ink: #E6E4DD;
+      --muted: #8E8D86;
+      --faint: rgba(230, 228, 221, 0.12);
+      --accent: #9B94B8;
+      --evidence: #7E9E6C;
+      --caution: #C2A25D;
+      --void: #C46D5D;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 5rem 1.5rem 7rem;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body.midnight-mode input[type="text"] {
+      border-color: rgba(230, 228, 221, 0.22);
+    }
+
+    body.midnight-mode input[type="text"]:focus {
+      border-color: var(--ink);
+      background: rgba(255, 255, 255, 0.05);
+      box-shadow: 0 0 0 1px var(--ink);
+    }
+
+    body.midnight-mode button.ask-btn {
+      background: var(--ink);
+      color: var(--bg);
+    }
+
+    body.midnight-mode button.ask-btn:hover:not(:disabled) {
+      background: #FFFFFF;
+      color: #121216;
+    }
+
+    /* Top-right Theme Toggle */
+    .theme-bar {
+      position: absolute;
+      top: 1.75rem;
+      right: 2rem;
+      z-index: 10;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--faint);
+      border-radius: 2px;
+      padding: 0.35rem 0.75rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.74rem;
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: all 0.25s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--ink);
+      color: var(--ink);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    /* Surrealist Motif: Eye in Floating Book */
+    .motif-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2.75rem;
+      transition: all 0.4s ease;
+      cursor: default;
+    }
+
+    .motif-container:hover .motif-svg {
+      transform: translateY(-2px);
+    }
+
+    .motif-svg {
+      width: 130px;
+      height: 92px;
+      color: var(--ink);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .motif-container.is-loading .motif-svg {
+      animation: eyeContemplate 2s infinite ease-in-out;
+    }
+
+    @keyframes eyeContemplate {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(0.96); opacity: 0.45; }
+    }
+
+    .motif-caption {
+      margin-top: 0.95rem;
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      transition: color 0.3s ease;
+    }
+
+    /* Form & Headline */
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .headline {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+      color: var(--ink);
+      text-align: center;
+      margin-bottom: 1.35rem;
+      letter-spacing: -0.01em;
+    }
+
+    .input-wrapper {
+      width: 100%;
+      margin-bottom: 0.9rem;
+      position: relative;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: transparent;
+      border: 1px solid rgba(26, 26, 31, 0.22);
+      border-radius: 2px;
+      padding: 0.95rem 1.15rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.96rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--ink);
+      background: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 0 0 1px var(--ink);
+    }
+
+    /* Whisper suggestions */
+    .whispers {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem 1rem;
+      margin-bottom: 1.35rem;
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .whisper-link {
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: none;
+      border-bottom: 1px dotted rgba(107, 106, 99, 0.4);
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .whisper-link:hover {
+      color: var(--ink);
+      border-bottom-color: var(--ink);
+    }
+
+    .button-row {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    button.ask-btn {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      border-radius: 2px;
+      padding: 0.65rem 2.5rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    button.ask-btn:hover:not(:disabled) {
+      background: #33333b;
+      transform: translateY(-1px);
+    }
+
+    button.ask-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+      transform: none;
+    }
+
+    /* Receipt Metadata Row */
+    .receipt {
+      margin: 3.5rem 0 2.25rem;
+      border-top: 1px solid var(--faint);
+      border-bottom: 1px solid var(--faint);
+      padding: 1rem 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.78rem;
+    }
+
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      line-height: 1.5;
+    }
+
+    .receipt-cell {
+      display: inline-flex;
+      gap: 0.5rem;
+    }
+
+    .receipt .k {
+      color: var(--muted);
+    }
+
+    .receipt .v {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .receipt .tier-label {
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* Grounded Answer Text */
+    .answer-section {
+      margin-bottom: 2.5rem;
+    }
+
+    .answer-action-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 0.85rem;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: none;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.74rem;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      letter-spacing: 0.04em;
+      transition: color 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      color: var(--ink);
+    }
+
+    .answer-text {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.15rem;
+      line-height: 1.85;
+      color: var(--ink);
+    }
+
+    .answer-text p {
+      margin-bottom: 1.15rem;
+    }
+
+    .answer-text h1, .answer-text h2, .answer-text h3, .answer-text h4 {
+      font-family: 'Newsreader', Georgia, serif;
+      font-weight: 500;
+      color: var(--ink);
+      margin: 1.75rem 0 0.75rem;
+      letter-spacing: -0.01em;
+    }
+
+    .answer-text h2 {
+      font-size: 1.35rem;
+      border-bottom: 1px solid var(--faint);
+      padding-bottom: 0.35rem;
+    }
+
+    .answer-text h3 {
+      font-size: 1.2rem;
+    }
+
+    .answer-text strong {
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .answer-text ul, .answer-text ol {
+      margin: 0.85rem 0 1.25rem 1.5rem;
+    }
+
+    .answer-text li {
+      margin-bottom: 0.4rem;
+    }
+
+    .answer-text table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    .answer-text th {
+      border-bottom: 1.5px solid var(--ink);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    .answer-text td {
+      border-bottom: 1px solid var(--faint);
+      padding: 0.6rem 0.8rem;
+      color: var(--ink);
+    }
+
+    .answer-text blockquote {
+      border-left: 2px solid var(--muted);
+      padding-left: 1.1rem;
+      margin: 1.25rem 0;
+      font-style: italic;
+      color: #4a4943;
+    }
+
+    /* Abstention State */
+    .abstention-section {
+      padding: 1.75rem 0 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .abstention-title {
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 1.35rem;
+      color: var(--void);
+      margin-bottom: 0.65rem;
+    }
+
+    .abstention-desc {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.08rem;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+
+    /* Evidence Citations */
+    .evidence-section {
+      margin-top: 1.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--faint);
+    }
+
+    .evidence-header {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.95rem;
+      font-weight: 600;
+    }
+
+    .evidence-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .evidence-item {
+      font-size: 0.84rem;
+      color: var(--ink);
+      line-height: 1.5;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+
+    .evidence-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      cursor: pointer;
+      padding: 0.35rem 0.45rem;
+      border-radius: 2px;
+      transition: background 0.2s ease;
+    }
+
+    .evidence-row:hover {
+      background: var(--faint);
+    }
+
+    .evidence-item .ev-num {
+      font-family: 'Fira Code', monospace;
+      color: var(--muted);
+      margin-right: 0.45rem;
+    }
+
+    .evidence-item .ev-pid {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .evidence-item .ev-sep {
+      color: var(--muted);
+      margin: 0 0.35rem;
+    }
+
+    .evidence-item .ev-meta {
+      color: var(--muted);
+    }
+
+    .evidence-item .ev-cue {
+      margin-left: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      transition: color 0.2s ease;
+      user-select: none;
+    }
+
+    .evidence-row:hover .ev-cue {
+      color: var(--ink);
+    }
+
+    .evidence-drawer {
+      margin: 0.35rem 0 0.5rem 0.5rem;
+      padding: 0.65rem 0.9rem;
+      border-left: 2px solid var(--accent);
+      background: rgba(0, 0, 0, 0.025);
+      border-radius: 0 2px 2px 0;
+      animation: excerptFade 0.25s ease;
+    }
+
+    body.midnight-mode .evidence-drawer {
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    @keyframes excerptFade {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .evidence-excerpt {
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 0.96rem;
+      line-height: 1.65;
+      color: var(--ink);
+      white-space: pre-line;
+      max-height: 250px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+
+    /* Footer Latency & System status */
+    .receipt-footer {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .backend-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .indicator-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--evidence);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top-Right Surrealist Theme Toggle -->
+  <div class="theme-bar">
+    <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle daylight / midnight parchment">
+      <span id="themeLabel">midnight</span>
+    </button>
+  </div>
+
+  <main class="container">
+    <!-- Surrealist Motif: Eye in Open Book -->
+    <div class="motif-container" id="motifContainer">
+      <!-- Open Eye in Book -->
+      <svg id="eyeOpenSvg" class="motif-svg" viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Open Book Outline -->
+        <path d="M 70 82 C 55 76, 25 76, 12 80 C 12 55, 12 35, 12 35 C 25 31, 55 31, 70 38 Z" stroke="var(--ink)" fill="none" />
+        <path d="M 12 80 L 12 84 C 25 80, 55 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
+        <path d="M 70 82 C 85 76, 115 76, 128 80 C 128 55, 128 35, 128 35 C 115 31, 85 31, 70 38 Z" stroke="var(--ink)" fill="none" />
+        <path d="M 128 80 L 128 84 C 115 80, 85 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
+        <line x1="70" y1="38" x2="70" y2="82" stroke="var(--ink)" />
+        
+        <!-- Subtle page rulings -->
+        <line x1="24" y1="46" x2="56" y2="44" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="24" y1="53" x2="58" y2="51" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="24" y1="60" x2="52" y2="58" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="84" y1="44" x2="116" y2="46" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="82" y1="51" x2="116" y2="53" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="88" y1="58" x2="116" y2="60" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+
+        <!-- Floating Open Eye -->
+        <path d="M 44 26 C 54 12, 86 12, 96 26" stroke="var(--ink)" stroke-width="1.4" />
+        <path d="M 44 26 C 54 40, 86 40, 96 26" stroke="var(--ink)" stroke-width="1.4" />
+        <circle cx="70" cy="26" r="8" stroke="var(--ink)" stroke-width="1.2" fill="none" />
+        <circle cx="70" cy="26" r="4.2" fill="var(--ink)" stroke="none" />
+        <circle cx="68" cy="24" r="1.2" fill="var(--bg)" stroke="none" />
+
+        <!-- Surrealist Quiet Rays -->
+        <line x1="70" y1="12" x2="70" y2="6" stroke="var(--muted)" stroke-width="1" />
+        <line x1="57" y1="15" x2="53" y2="10" stroke="var(--muted)" stroke-width="1" />
+        <line x1="83" y1="15" x2="87" y2="10" stroke="var(--muted)" stroke-width="1" />
+      </svg>
+
+      <!-- Closed Eye in Book (Abstention State) -->
+      <svg id="eyeClosedSvg" class="motif-svg" viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+        <!-- Open Book Outline -->
+        <path d="M 70 82 C 55 76, 25 76, 12 80 C 12 55, 12 35, 12 35 C 25 31, 55 31, 70 38 Z" stroke="var(--ink)" fill="none" />
+        <path d="M 12 80 L 12 84 C 25 80, 55 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
+        <path d="M 70 82 C 85 76, 115 76, 128 80 C 128 55, 128 35, 128 35 C 115 31, 85 31, 70 38 Z" stroke="var(--ink)" fill="none" />
+        <path d="M 128 80 L 128 84 C 115 80, 85 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
+        <line x1="70" y1="38" x2="70" y2="82" stroke="var(--ink)" />
+
+        <line x1="24" y1="46" x2="56" y2="44" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="24" y1="53" x2="58" y2="51" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="24" y1="60" x2="52" y2="58" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="84" y1="44" x2="116" y2="46" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="82" y1="51" x2="116" y2="53" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+        <line x1="88" y1="58" x2="116" y2="60" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
+
+        <!-- Closed Sleeping Eyelid -->
+        <path d="M 44 26 C 54 36, 86 36, 96 26" stroke="var(--void)" stroke-width="1.5" />
+        <line x1="54" y1="31" x2="51" y2="37" stroke="var(--void)" stroke-width="1.1" />
+        <line x1="62" y1="33" x2="61" y2="40" stroke="var(--void)" stroke-width="1.1" />
+        <line x1="70" y1="33.5" x2="70" y2="41" stroke="var(--void)" stroke-width="1.1" />
+        <line x1="78" y1="33" x2="79" y2="40" stroke="var(--void)" stroke-width="1.1" />
+        <line x1="86" y1="31" x2="89" y2="37" stroke="var(--void)" stroke-width="1.1" />
+      </svg>
+
+      <span class="motif-caption" id="motifCaption">the watching eye</span>
+    </div>
+
+    <!-- Query Input Section -->
+    <form id="askForm" onsubmit="handleAsk(event)">
+      <label for="queryInput" class="headline">ask something of the corpus</label>
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="queryInput" 
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="e.g. How many questions does FinExam-10K contain?" 
+          required
+        />
+      </div>
+
+      <!-- Surrealist Whispers / Quick Prompts -->
+      <div class="whispers">
+        <span class="whisper-link" onclick="prefill('How does CamoDocs evade clustering defenses like TrustRAG in retrieval-augmented generation?')">inquire into CamoDocs</span>
+        <span>•</span>
+        <span class="whisper-link" onclick="prefill('Give an overview of the Twin Worlds paper and what problem it addresses.')">inquire into Twin Worlds</span>
+        <span>•</span>
+        <span class="whisper-link" onclick="prefill('What are the two evaluation tracks in FinExam-10K, and how many items are in each?')">inquire into FinExam-10K</span>
+        <span>•</span>
+        <span class="whisper-link" onclick="prefill('What is Machine Learning?')">test the corpus limits</span>
+      </div>
+
+      <div class="button-row">
+        <button type="submit" id="askBtn" class="ask-btn">ask</button>
+      </div>
+    </form>
+
+    <!-- Output Section (Hidden initially) -->
+    <section id="resultsContainer" style="display: none;">
+      <!-- Receipt Style Metadata Row -->
+      <div class="receipt">
+        <div class="receipt-row">
+          <span class="receipt-cell"><span class="k">route:</span> <span class="v" id="metaRoute">—</span></span>
+          <span class="receipt-cell"><span class="k">score:</span> <span class="v" id="metaScore">—</span></span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-cell"><span class="k">tier:</span> <span class="v tier-label" id="metaTier">—</span></span>
+          <span class="receipt-cell"><span class="k">tokens:</span> <span class="v" id="metaTokens">—</span></span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-cell"><span class="k">critic:</span> <span class="v" id="metaCritic">—</span></span>
+          <span class="receipt-cell"><span class="k">cost:</span> <span class="v" id="metaCost">—</span></span>
+        </div>
+      </div>
+
+      <!-- Grounded Answer Text -->
+      <div class="answer-section" id="answerSection">
+        <div class="answer-action-bar" id="answerActionBar">
+          <button type="button" class="copy-btn" id="copyBtn" onclick="copyAnswerText()">[ copy answer ]</button>
+        </div>
+        <div class="answer-text" id="answerBody"></div>
+      </div>
+
+      <!-- Abstention Clean State -->
+      <div class="abstention-section" id="abstentionSection" style="display: none;">
+        <div class="abstention-title">no evidence found</div>
+        <div class="abstention-desc" id="abstentionDesc">
+          The corpus contains no verified evidence answering this question. The Cross-Encoder scored all candidate passages below the relevance threshold.
+        </div>
+      </div>
+
+      <!-- Citations List -->
+      <div class="evidence-section" id="evidenceSection" style="display: none;">
+        <div class="evidence-header">evidence</div>
+        <ol class="evidence-list" id="evidenceList"></ol>
+      </div>
+
+      <!-- Footer Latency -->
+      <div class="receipt-footer">
+        <span class="backend-indicator"><span class="indicator-dot"></span> corpus connected</span>
+        <span id="metaLatency">latency: —</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Robust API base resolving: works seamlessly on file:/// and http://127.0.0.1:8000
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://127.0.0.1:8000' : '';
+
+    let lastRawAnswer = '';
+
+    // Surrealist Midnight / Daylight Theme Toggle
+    function initTheme() {
+      const saved = localStorage.getItem('corpus_theme');
+      const lbl = document.getElementById('themeLabel');
+      if (saved === 'midnight') {
+        document.body.classList.add('midnight-mode');
+        if (lbl) lbl.textContent = 'daylight';
+      } else {
+        document.body.classList.remove('midnight-mode');
+        if (lbl) lbl.textContent = 'midnight';
+      }
+    }
+
+    function toggleTheme() {
+      const isMidnight = document.body.classList.toggle('midnight-mode');
+      const lbl = document.getElementById('themeLabel');
+      if (lbl) lbl.textContent = isMidnight ? 'daylight' : 'midnight';
+      localStorage.setItem('corpus_theme', isMidnight ? 'midnight' : 'daylight');
+    }
+
+    // Call immediately on script execution
+    initTheme();
+
+    // Copy Answer Functionality
+    function copyAnswerText() {
+      if (!lastRawAnswer) return;
+      navigator.clipboard.writeText(lastRawAnswer).then(() => {
+        const btn = document.getElementById('copyBtn');
+        if (btn) {
+          btn.textContent = '[ copied ]';
+          btn.style.color = 'var(--evidence)';
+          setTimeout(() => {
+            btn.textContent = '[ copy answer ]';
+            btn.style.color = '';
+          }, 2000);
+        }
+      }).catch(err => {
+        console.error('Clipboard copy failed:', err);
+      });
+    }
+
+    // Interactive Citation Excerpt Drawer Toggle
+    function toggleEvidence(idx) {
+      const drawer = document.getElementById(`evDrawer-${idx}`);
+      const cue = document.getElementById(`evCue-${idx}`);
+      if (!drawer) return;
+      if (drawer.style.display === 'none' || drawer.style.display === '') {
+        drawer.style.display = 'block';
+        if (cue) cue.textContent = '– excerpt';
+      } else {
+        drawer.style.display = 'none';
+        if (cue) cue.textContent = '+ excerpt';
+      }
+    }
+
+    function prefill(text) {
+      const input = document.getElementById('queryInput');
+      input.value = text;
+      input.focus();
+    }
+
+    async function handleAsk(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('queryInput');
+      const query = input.value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById('askBtn');
+      const motif = document.getElementById('motifContainer');
+      const eyeOpen = document.getElementById('eyeOpenSvg');
+      const eyeClosed = document.getElementById('eyeClosedSvg');
+      const caption = document.getElementById('motifCaption');
+      const resultsContainer = document.getElementById('resultsContainer');
+      const answerSection = document.getElementById('answerSection');
+      const abstentionSection = document.getElementById('abstentionSection');
+      const evidenceSection = document.getElementById('evidenceSection');
+      const evidenceList = document.getElementById('evidenceList');
+
+      // Calm loading state: dim the motif slightly, disable button
+      btn.disabled = true;
+      motif.classList.add('is-loading');
+
+      // Reset eye to open initially while waiting
+      eyeOpen.style.display = 'block';
+      eyeClosed.style.display = 'none';
+      caption.textContent = 'consulting the corpus...';
+
+      const startTime = performance.now();
+
+      try {
+        const res = await fetch(`${API_BASE}/api/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
+        });
+
+        if (!res.ok) {
+          throw new Error('Server returned ' + res.status);
+        }
+
+        const data = await res.json();
+        const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+
+        // Parse metrics
+        const route = data.route || 'pinpoint_retrieval';
+        const numScore = (typeof data.max_rerank_score === 'number') ? data.max_rerank_score : (parseFloat(data.max_rerank_score) || 0.0);
+        const score = numScore.toFixed(4);
+        const isRelevant = data.is_relevant_evidence === true || (data.is_relevant_evidence !== false && numScore >= 0.25);
+        const tokens = data.total_tokens || 0;
+        const cost = data.total_cost_usd !== undefined ? '$' + Number(data.total_cost_usd).toFixed(6) : '$0.000000';
+
+        // Determine Confidence Tier & Critic status
+        let tierLabel = '';
+        let tierColor = '';
+        let criticLabel = '';
+
+        if (!isRelevant || numScore < 0.25 || data.final_status === 'ABSTAINED') {
+          tierLabel = 'abstention';
+          tierColor = 'var(--void)';
+          criticLabel = 'bypassed (fast abstention)';
+        } else if (numScore < 0.60) {
+          tierLabel = 'borderline';
+          tierColor = 'var(--caution)';
+          criticLabel = data.critic_score ? `invoked (${data.critic_score}/5)` : 'invoked';
+        } else {
+          tierLabel = 'high confidence';
+          tierColor = 'var(--evidence)';
+          criticLabel = (route === 'simple_direct') ? 'bypassed (fast path)' : (data.critic_score ? `invoked (${data.critic_score}/5)` : 'invoked');
+        }
+
+        // Populate Receipt Row
+        document.getElementById('metaRoute').textContent = route;
+        document.getElementById('metaScore').textContent = score;
+        
+        const tierElem = document.getElementById('metaTier');
+        tierElem.textContent = tierLabel;
+        tierElem.style.color = tierColor;
+
+        document.getElementById('metaTokens').textContent = tokens.toLocaleString();
+        document.getElementById('metaCritic').textContent = criticLabel;
+        document.getElementById('metaCost').textContent = cost;
+        document.getElementById('metaLatency').textContent = `latency: ${duration}s`;
+
+        resultsContainer.style.display = 'block';
+
+        // Handle Abstention vs. Grounded Answer
+        if (tierLabel === 'abstention' || data.final_status === 'ABSTAINED') {
+          // Eye closes
+          eyeOpen.style.display = 'none';
+          eyeClosed.style.display = 'block';
+          caption.textContent = 'the eye closed';
+
+          answerSection.style.display = 'none';
+          abstentionSection.style.display = 'block';
+          evidenceSection.style.display = 'none';
+          if (data.draft_answer) {
+            document.getElementById('abstentionDesc').textContent = data.draft_answer;
+          }
+        } else {
+          // Eye remains open and watching
+          eyeOpen.style.display = 'block';
+          eyeClosed.style.display = 'none';
+          caption.textContent = 'the watching eye';
+
+          answerSection.style.display = 'block';
+          abstentionSection.style.display = 'none';
+
+          // Format answer text with Markdown
+          const rawAnswer = data.draft_answer || '';
+          lastRawAnswer = rawAnswer;
+          if (typeof marked !== 'undefined' && marked.parse) {
+            document.getElementById('answerBody').innerHTML = marked.parse(rawAnswer);
+          } else {
+            document.getElementById('answerBody').textContent = rawAnswer;
+          }
+
+          // Format Citations
+          let citations = data.citations || [];
+          if (citations.length === 0 && rawAnswer) {
+            const pattern = /\[([0-9]{4}\.[0-9]{4,5}(?:v[0-9]+)?)[,\s]+([^,\]]+)[,\s]+(?:Page\s+)?([0-9]+)\]/gi;
+            let m;
+            while ((m = pattern.exec(rawAnswer)) !== null) {
+              citations.push({ paper_id: m[1], section: m[2].trim(), page: m[3].trim() });
+            }
+          }
+
+          if (citations.length > 0) {
+            evidenceSection.style.display = 'block';
+            evidenceList.innerHTML = '';
+            
+            const candidateChunks = data.reranked_chunks || data.retrieved_chunks || [];
+
+            citations.forEach((c, idx) => {
+              // Find matching chunk text from candidates
+              let matched = candidateChunks.find(ch => {
+                const m = ch.metadata || {};
+                const pidMatch = m.paper_id === c.paper_id;
+                const secMatch = c.section && m.section && m.section.toLowerCase().includes(c.section.toLowerCase());
+                const pgMatch = c.page && String(m.page_num) === String(c.page);
+                return pidMatch && (secMatch || pgMatch);
+              });
+
+              if (!matched && candidateChunks[idx]) {
+                matched = candidateChunks[idx];
+              }
+
+              const rawExcerpt = matched ? matched.text.trim() : `Evidence passage resolved from ${c.paper_id} (${c.section}).`;
+              const safeExcerpt = rawExcerpt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+              const li = document.createElement('li');
+              li.className = 'evidence-item';
+              li.innerHTML = `
+                <div class="evidence-row" onclick="toggleEvidence(${idx})">
+                  <span class="ev-num">[${idx + 1}]</span>
+                  <span class="ev-pid">${c.paper_id}</span>
+                  <span class="ev-sep">—</span>
+                  <span class="ev-meta">${c.section}${c.page ? ', p.' + c.page : ''}</span>
+                  <span class="ev-cue" id="evCue-${idx}">+ excerpt</span>
+                </div>
+                <div class="evidence-drawer" id="evDrawer-${idx}" style="display: none;">
+                  <div class="evidence-excerpt">${safeExcerpt}</div>
+                </div>
+              `;
+              evidenceList.appendChild(li);
+            });
+          } else {
+            evidenceSection.style.display = 'none';
+          }
+        }
+
+      } catch (err) {
+        caption.textContent = 'the eye rests in silence';
+        alert('Could not consult the corpus. Ensure the backend server is running: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        motif.classList.remove('is-loading');
+      }
+    }
+  </script>
+</body>
+</html>

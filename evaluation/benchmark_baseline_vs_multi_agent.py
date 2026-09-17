@@ -337,6 +337,7 @@ def generate_markdown_report(results: List[Dict[str, Any]]):
     base_interception = sum(1 for r in q4_q5 if r["eval"]["baseline_pre_flight_interception"]) / len(q4_q5) * 100
     multi_interception = sum(1 for r in q4_q5 if r["eval"]["multi_agent_pre_flight_interception"]) / len(q4_q5) * 100
     lines.append(f"| **Pre-Flight Interception Rate** | {base_interception:.0f}% (0/2 intercepted) | **{multi_interception:.0f}% (2/2 intercepted)** | Pre-execution cutoff in < 5ms at $0.00 cost |")
+    lines.append("\n> **Note on Sample Size ($N=5$):** Evaluated on a 5-query canonical benchmark specifically chosen to probe distinct architectural boundaries: single-entity M&A, cross-entity supply chains, strategic trade risks, unindexed corporate entities, and non-financial domain filtering. See [`evaluation/benchmark_results.json`](evaluation/benchmark_results.json) for full raw logs, latency measurements, and exact answer texts.\n")
 
     lines.append("\n---\n")
     lines.append("## Query-by-Query Deep Dive\n")

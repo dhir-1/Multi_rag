@@ -74,7 +74,7 @@ An institutional-grade, multi-agent Retrieval-Augmented Generation (RAG) system 
 ### Method 1: Dynamic Zero-Hardcoding Filing Registry & Entity Dispatch (`agents/registry.py`)
 - **Auto-Discovery**: Scans indexed filings dynamically without static dictionaries. Registers companies, tickers, CIKs, and fiscal dates directly from 10-K metadata.
 - **Alias Resolution**: Normalizes corporate name variants, tickers, and brand entities (e.g. `meta`, `facebook`, `instagram`, `whatsapp`, `threads` $\rightarrow$ `META`; `alphabet`, `google`, `youtube` $\rightarrow$ `GOOGL`).
-- **50/50 Balanced Entity Quota**: In comparative queries (e.g., *"Compare AMD vs NVIDIA foundries"*), naive vector search often returns 100% of one entity and starves the other. Our dispatcher enforces strict $50/50$ quota partitioning across entities before merging.
+- **Guaranteed Balanced Entity Quota**: In comparative queries across multiple entities, unconstrained dense retrieval can skew toward whichever entity has higher text volume or denser keyword matches. The entity dispatcher eliminates this risk by enforcing deterministic quota partitioning per entity (e.g. 4 chunks for AMD, 4 chunks for NVIDIA) regardless of corpus size or retrieval budget.
 
 ### Method 2: Calibrated Cross-Encoder Confidence Gating (`agents/reranker.py`, `agents/graph.py`)
 - **Eliminating Flaky LLM Critics**: Replaces multi-thousand-token LLM evaluator loops with local **FlashRank Cross-Encoder** (`ms-marco-MiniLM-L-12-v2`) running on CPU ($0 cost).
@@ -120,6 +120,8 @@ Full report: [`evaluation/BENCHMARK_REPORT.md`](evaluation/BENCHMARK_REPORT.md) 
 | **Total Tokens Consumed (All 5)** | 15,920 tokens | 17,261 tokens | **Only +8.4% token difference overall** |
 | **Total API Cost (All 5 Queries)** | $0.001966 | $0.002084 | **+$0.000118 total difference** (~1/10th of a cent) |
 | **Cross-Company Balanced Recall** | 100% | 100% | Equal representation for all entities |
+
+> **Note on Sample Size ($N=5$):** This benchmark evaluates 5 canonical stress-test queries specifically chosen to probe distinct architectural boundaries: single-entity M&A, cross-entity supply chains, strategic trade risks, unindexed corporate entities, and non-financial domain filtering. See [`evaluation/benchmark_results.json`](evaluation/benchmark_results.json) for full raw logs, latency measurements, and exact answer texts.
 
 ### Key Query-Level Takeaways
 1. **Factual Completeness (Netflix M&A)**: Baseline missed Note 15's credit agreements and literally stated: *"financing arrangements are not known"*. Multi-Agent retrieved the **$42.2B bridge facility**, **$5B revolver**, and **$20B delayed-draw term loan** with exact citations.

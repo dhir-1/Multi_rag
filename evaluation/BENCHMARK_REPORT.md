@@ -19,6 +19,8 @@
 | **Cross-Entity Balanced Recall** | 100% | 100% | Guarantees both companies retrieved in comparisons |
 | **Pre-Flight Interception Rate** | 0% (0/2 intercepted) | **100% (2/2 intercepted)** | Pre-execution cutoff in < 5ms at $0.00 cost |
 
+> **Note on Sample Size ($N=5$):** Evaluated on a 5-query canonical benchmark specifically chosen to probe distinct architectural boundaries: single-entity M&A, cross-entity supply chains, strategic trade risks, unindexed corporate entities, and non-financial domain filtering. See [`evaluation/benchmark_results.json`](evaluation/benchmark_results.json) for full raw logs, latency measurements, and exact answer texts.
+
 ---
 
 ## Query-by-Query Deep Dive

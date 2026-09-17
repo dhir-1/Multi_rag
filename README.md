@@ -104,21 +104,23 @@ An institutional-grade, multi-agent Retrieval-Augmented Generation (RAG) system 
 
 ## Empirical Benchmark: Baseline Naive RAG vs. Advanced Multi-Agent RAG
 
-A comprehensive benchmark was executed across 5 canonical query categories comparing **Baseline Naive RAG** (standard top-6 dense retrieval without reranking or guardrails) against our **Advanced Multi-Agent RAG**.
+A comprehensive benchmark was executed across 5 canonical query categories comparing **Baseline Naive RAG** (pure dense retrieval with prompt-based citation rules) against our **Advanced Multi-Agent RAG**. Both pipelines operated under an **equalized 8-chunk context budget** and were evaluated using the exact same provenance verifier.
 
 Full report: [`evaluation/BENCHMARK_REPORT.md`](evaluation/BENCHMARK_REPORT.md) | Raw Data: [`evaluation/benchmark_results.json`](evaluation/benchmark_results.json)
 
-### Aggregate Scorecard
+### Aggregate Scorecard (Equalized 8-Chunk Budget)
 
-| Evaluation Metric | ❌ Baseline Naive RAG | ✅ Advanced Multi-Agent RAG | Operational Impact |
+| Evaluation Metric | ❌ Baseline Naive RAG | ✅ Advanced Multi-Agent RAG | Operational Impact / Delta |
 | :--- | :---: | :---: | :--- |
-| **Verified SEC Citations** | **0** (unverifiable text) | **7** verified `[TICKER, Section]` | **100% regulatory auditability** |
-| **Out-of-Scope Interception Rate** | **0%** (burned tokens on all cases) | **100%** (instant abstention) | **Zero hallucination / Zero token bleed** |
-| **Out-of-Scope Latency** | 11.68s average | **0.003s (3 milliseconds)** | **~3,800x faster response** |
-| **Out-of-Scope Tokens & Cost** | 3,437 tokens ($0.000364) | **0 tokens ($0.000000)** | **100% cost & token savings** |
-| **Cross-Company Balanced Recall** | Prone to single-entity bias | **100% Guaranteed 50/50 Quota** | Equal representation for all entities |
-| **In-Scope Tokens (Q1–Q3)** | 9,068 tokens | 17,691 tokens | Deeper 8-chunk context & full debt analysis |
-| **Total API Cost (All 5 Queries)** | $0.001533 | $0.002170 | +$0.000637 total difference |
+| **Context Chunk Budget** | 8 chunks (dense only) | 8 chunks (hybrid + reranked) | Equalized context window across both systems |
+| **Citation Prompting** | Explicit `[TICKER, Section]` rule | Schema-bounded enum prompt | Prompt engineering vs Architectural enforcement |
+| **Verified SEC Citations** | **0** (used generic tags like `[2]`) | **9 verified `[TICKER, Section]`** | **100% auditable regulatory provenance** |
+| **Out-of-Scope Interception Rate** | **0%** (0/2 intercepted) | **100% (2/2 intercepted)** | Pre-execution cutoff in < 5ms at $0.00 cost |
+| **Out-of-Scope Tokens & Cost** | 4,373 tokens ($0.000462) | **0 tokens ($0.000000)** | **100% cost & token savings on guarded traffic** |
+| **In-Scope Tokens (Q1–Q3)** | 11,547 tokens | 17,261 tokens | +49.5% tokens for full debt & strategy analysis |
+| **Total Tokens Consumed (All 5)** | 15,920 tokens | 17,261 tokens | **Only +8.4% token difference overall** |
+| **Total API Cost (All 5 Queries)** | $0.001966 | $0.002084 | **+$0.000118 total difference** (~1/10th of a cent) |
+| **Cross-Company Balanced Recall** | 100% | 100% | Equal representation for all entities |
 
 ### Key Query-Level Takeaways
 1. **Factual Completeness (Netflix M&A)**: Baseline missed Note 15's credit agreements and literally stated: *"financing arrangements are not known"*. Multi-Agent retrieved the **$42.2B bridge facility**, **$5B revolver**, and **$20B delayed-draw term loan** with exact citations.

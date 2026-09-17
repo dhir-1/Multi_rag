@@ -20,6 +20,7 @@ class AgentState(TypedDict, total=False):
 
     # 2. Planning & Decomposition
     sub_queries: List[str]
+    tool_calls: List[Dict[str, Any]]
 
     # 3. Retrieval & Reranking Results
     retrieved_chunks: List[Dict[str, Any]]

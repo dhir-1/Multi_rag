@@ -1,0 +1,318 @@
+[
+  {
+    "test_case": {
+      "id": "Q1_SINGLE_ENTITY_MA",
+      "category": "Single-Company M&A / High-Stakes Financial Detail",
+      "query": "What are the key terms, financing arrangements, and closing timeline of Netflix's pending acquisition of Warner Bros. Discovery?",
+      "expected_entities": [
+        "NFLX"
+      ],
+      "critical_facts": [
+        "$27.75",
+        "72",
+        "42.2",
+        "5.8",
+        "12-18 months"
+      ]
+    },
+    "baseline": {
+      "pipeline": "Baseline Naive RAG",
+      "answer": "**Key terms of the Netflix\u2011Warner\u202fBros.\u202fDiscovery (WBD) transaction**\n\n| Item | Detail |\n|------|--------|\n| **Cash consideration per WBD share** | $27.75 (subject to adjustment under the Amended and Restated Merger Agreement) |\n| **Total equity value (as of Dec\u202f4\u202f2025)** | \u2248\u202f$72\u202fbillion |\n| **Total enterprise value (as of Dec\u202f4\u202f2025)** | \u2248\u202f$82.7\u202fbillion |\n| **Termination fee** | $5.8\u202fbillion payable by Netflix to WBD if the agreement is terminated under specified circumstances (Note\u202f7) |\n\n**Financing arrangements**\n\nThe 10\u2011K excerpts provided do **not** disclose the specific financing structure Netflix will use to fund the transaction (e.g., debt issuance, equity issuance, or other financing).  The filing notes that the acquisition is a \u201ccash consideration\u201d but does not detail how that cash will be raised.  Therefore, based on the supplied context, the financing arrangements are not known.\n\n**Closing timeline**\n\n* Expected closing: **12\u201318 months** after the definitive agreement date of **December\u202f4\u202f2025**.  \n* Conditions: subject to (i) receipt of required regulatory approvals, (ii) approval by WBD stockholders, (iii) consummation of the separation and distribution of Discovery Global, and (iv) other customary closing conditions.  \n\nThese are the key terms, the (unknown) financing arrangements, and the projected closing window for Netflix\u2019s pending acquisition of Warner\u202fBros.\u202fDiscovery.",
+      "latency_sec": 2.02,
+      "retrieval_latency_sec": 0.234,
+      "input_tokens": 2234,
+      "output_tokens": 686,
+      "total_tokens": 2920,
+      "cost_usd": 0.000361,
+      "retrieved_chunk_count": 6,
+      "retrieved_tickers": [
+        "NFLX"
+      ],
+      "citation_count": 0,
+      "citations": [],
+      "status": "ANSWERED"
+    },
+    "multi_agent": {
+      "pipeline": "Advanced Multi-Agent RAG",
+      "answer": "### Key Terms of the Warner\u202fBros.\u202fDiscovery (WBD) Transaction \n- **Cash consideration per share:** Each WBD stockholder will receive **$27.75** in cash for each share of WBD common stock outstanding immediately prior to closing, subject to adjustment under the Amended and Restated Merger Agreement. [NFLX, Item 15.] \n- **Equity and enterprise values:** The transaction is priced at an approximate **$72.0\u202fbillion** equity value and **$82.7\u202fbillion** enterprise value (as of December\u202f4\u202f2025). [NFLX, Item 15.] \n- **Termination fee:** If the merger is terminated under specified circumstances, Netflix would pay a **$5.8\u202fbillion** termination fee to WBD. [NFLX, Item 15.] \n\n### Financing Arrangements \n- **Bridge Facility Incremental Commitments Agreement (January\u202f19\u202f2026):** Increases existing bridge facility commitments from **$34\u202fbillion** to **$42.2\u202fbillion** of senior unsecured bridge term loan commitments. These funds are earmarked for the purchase price, related fees, and optional refinancing of existing debt. [NFLX, Item 15.] \n- **Senior Unsecured Revolving Credit Agreement (December\u202f22\u202f2025):** Provides a revolving credit facility to support liquidity needs related to the transaction. [NFLX, Item 15.] \n- **Senior Unsecured Delayed\u2011Draw Term Loan Credit Agreement (December\u202f22\u202f2025):** Offers a term loan structure to finance the transaction. [NFLX, Item 15.] \n- **Additional debt flexibility:** Netflix may raise further debt capital as needed, subject to market conditions and its operating performance. [NFLX, Item 15.] \n\n### Closing Timeline \n- **Expected closing window:** Netflix anticipates the WBD transaction to close **12\u201318 months** after the definitive agreement date (December\u202f4\u202f2025). \n- **Conditions to closing:** \n - Receipt of required regulatory approvals. \n - Approval by WBD stockholders. \n - Completion of the separation and distribution of Discovery Global into a new publicly\u2011traded company. \n - Fulfillment of other customary closing conditions. [NFLX, Item 15.] \n\nThese points summarize the principal terms, financing structure, and projected closing schedule for Netflix\u2019s pending acquisition of Warner\u202fBros.\u202fDiscovery.",
+      "latency_sec": 14.552,
+      "input_tokens": 6082,
+      "output_tokens": 841,
+      "total_tokens": 6923,
+      "cost_usd": 0.000776,
+      "retrieved_chunk_count": 8,
+      "retrieved_tickers": [
+        "NFLX"
+      ],
+      "citation_count": 1,
+      "citations": [
+        {
+          "ticker": "NFLX",
+          "section": "Item 15.",
+          "citation_text": "[NFLX, Item 15.]"
+        }
+      ],
+      "status": "ACCEPTED",
+      "max_rerank_score": 0.8511
+    },
+    "eval": {
+      "baseline_entity_balance": true,
+      "multi_agent_entity_balance": true,
+      "baseline_guardrail_pass": true,
+      "multi_agent_guardrail_pass": true,
+      "token_savings_pct": -137.1,
+      "cost_savings_pct": -115.0
+    }
+  },
+  {
+    "test_case": {
+      "id": "Q2_CROSS_ENTITY_BALANCE",
+      "category": "Cross-Company 50/50 Balance & Specific Supply Chain",
+      "query": "Compare the primary foundry partners and wafer dependency risks disclosed by AMD and NVIDIA.",
+      "expected_entities": [
+        "AMD",
+        "NVDA"
+      ],
+      "critical_facts": [
+        "GlobalFoundries",
+        "GF"
+      ]
+    },
+    "baseline": {
+      "pipeline": "Baseline Naive RAG",
+      "answer": "**Primary foundry partners**\n\n| Company | Primary foundry partner(s) disclosed | Notes |\n|---------|-------------------------------------|-------|\n| **AMD** | **GF (GlobalFoundries)** \u2013 a wafer\u2011supply agreement that guarantees a minimum annual capacity allocation and sets pricing through 2026. | The agreement is a long\u2011term, capacity\u2011based contract that gives AMD a defined share of GF\u2019s production. |\n| **NVIDIA** | No specific foundry partner is named in the risk\u2011factor section. | NVIDIA\u2019s disclosures refer generically to \u201cfoundries\u201d that manufacture its wafers, but the company does not identify a single primary partner. |\n\n**Wafer\u2011dependency risks**\n\n| Risk | AMD | NVIDIA |\n|------|-----|--------|\n| **Capacity guarantees** | The GF agreement provides a minimum capacity allocation, but AMD still faces the risk that actual wafer needs may be lower than the target, leading to excess inventory or higher unit costs. | NVIDIA has no guaranteed capacity; it relies on \u201cfoundries\u201d that may not commit to a minimum volume, creating uncertainty in supply. |\n| **Pricing control** | AMD\u2019s pricing is set by the GF agreement, but the company still faces potential price increases if GF raises rates or if other third\u2011party manufacturers raise prices. | NVIDIA\u2019s risk factors highlight \u201cpotential higher wafer and component prices\u201d due to incorrect demand forecasting or late orders, indicating less pricing control. |\n| **Yield and quality** | AMD cites limited control over yield, cycle times, quality assurance, and the possibility of lower manufacturing yields from its third\u2011party manufacturers. | NVIDIA notes that it has \u201climited control over product quantity and quality, manufacturing yields, and delivery schedules\u201d because it outsources all manufacturing to foundries. |\n| **Supply disruptions** | AMD lists a wide range of disruption scenarios (damage to facilities, power outages, water shortages, high\u2011heat events, financial difficulties, raw\u2011material shortages, environmental or political events) that could delay or interrupt wafer supply. | NVIDIA\u2019s disclosures similarly mention \u201clack of guaranteed supply,\u201d \u201cdecommitment by suppliers,\u201d and \u201cfailure by foundries to procure raw materials or provide adequate capacity,\u201d underscoring the same types of disruption risks. |\n| **Geographic concentration** | AMD\u2019s risk notes that dependence on a limited number of suppliers (including GF) can exacerbate supply risks. | NVIDIA explicitly cites the \u201climited number and geographic concentration of global suppliers, foundries, contract manufacturers, assembly and test providers and memory manufacturers\u201d as a risk. |\n| **Technology transition** | AMD does not specifically discuss process\u2011node transitions in the risk section, but it does mention that its third\u2011party manufacturers are responsible for the process technologies used to fabricate wafers. | NVIDIA highlights the risk that foundries may fail to \u201cdevelop, obtain, or successfully implement high\u2011quality process technologies, including transitions to smaller geometry process technologies\u201d needed for its products. |\n| **Inventory & demand forecasting** | AMD warns that over\u2011estimating demand or experiencing a drop in demand could lead to excess inventory and higher production costs. | NVIDIA notes that inaccurate demand forecasting for new use cases can create revenue volatility, implying similar inventory concerns. |\n\n**Key take\u2011aways**\n\n* **Foundry partner visibility** \u2013 AMD discloses a specific, long\u2011term partnership with GlobalFoundries, giving it a clearer view of capacity and pricing. NVIDIA does not name a primary partner, indicating a more dispersed or less formalized relationship with its foundries.  \n* **Capacity certainty** \u2013 AMD\u2019s GF agreement provides a minimum capacity allocation, whereas NVIDIA\u2019s risk factors emphasize the lack of guaranteed supply and the possibility of decommitment.  \n* **Pricing & yield control** \u2013 Both companies face limited control over wafer pricing and yields, but AMD\u2019s agreement gives it some pricing stability, while NVIDIA\u2019s risk notes highlight price volatility and yield uncertainty.  \n* **Supply\u2011chain concentration** \u2013 Both companies recognize the concentration risk, but NVIDIA explicitly cites the limited number and geographic concentration of suppliers as a distinct risk.  \n\nOverall, AMD\u2019s disclosed risks are framed around a single, capacity\u2011guaranteed partner (GF) and the operational challenges that can arise even with that agreement, whereas NVIDIA\u2019s risks are framed around a broader, less\u2011defined foundry ecosystem with greater uncertainty in capacity, pricing, and technology transitions.",
+      "latency_sec": 12.161,
+      "retrieval_latency_sec": 0.148,
+      "input_tokens": 2028,
+      "output_tokens": 1197,
+      "total_tokens": 3225,
+      "cost_usd": 0.000442,
+      "retrieved_chunk_count": 6,
+      "retrieved_tickers": [
+        "AMD",
+        "NVDA"
+      ],
+      "citation_count": 0,
+      "citations": [],
+      "status": "ANSWERED"
+    },
+    "multi_agent": {
+      "pipeline": "Advanced Multi-Agent RAG",
+      "answer": "### AMD: Foundry Partners & Wafer\u2011Dependency Risks \n- **Primary Foundry Partners** \n - **GlobalFoundries (GF)** \u2013 wafer purchases for HPC products at 12\u202fnm and 14\u202fnm nodes; a wafer\u2011supply agreement sets minimum annual capacity and pricing through 2026. [AMD, ITEM 15.] \n - **TSMC, UMC, Samsung** \u2013 production of programmable logic devices. [AMD, ITEM 15.] \n - **ATMP Joint Ventures** \u2013 Tongfu Microelectronics, Siliconware Precision Industries Ltd., and King Yuan Electronics provide assembly, test, mark, and packaging services. [AMD, ITEM 15.] \n\n- **Key Wafer\u2011Dependency Risks** \n - **Capacity & Inventory** \u2013 If actual wafer needs fall below the agreed purchase target, AMD may face excess inventory or higher unit costs, hurting gross margin. [AMD, ITEM 1A. RISK FACTORS] \n - **Control & Quality** \u2013 Limited control over delivery schedules, yield, cycle times, and quality assurance; risk of IP misappropriation and limited inventory management. [AMD, ITEM 1A. RISK FACTORS] \n - **Supply Disruptions** \u2013 Damage to facilities, power outages, water shortages, high\u2011heat events, financial distress, raw\u2011material shortages, or other environmental, social, or political circumstances can delay or halt wafer supply. [AMD, ITEM 1A. RISK FACTORS] \n - **Incident Example** \u2013 In Q1\u202f2024, an incident at a contract manufacturer caused inventory loss. [AMD, ITEM 1A. RISK FACTORS] \n\n### NVIDIA: Foundry Partners & Wafer\u2011Dependency Risks \n- **Primary Foundry Partners** \n - **TSMC** and **Samsung** \u2013 used for wafer fabrication; NVIDIA\u2019s fabless model relies on these foundries for all wafer production. [NVDA, Item 1. Business] \n - **Global Supply Chain** \u2013 assembly, testing, and packaging performed by third\u2011party subcontractors outside the U.S.; operations are mainly concentrated in Asia but expanding into the U.S. and Latin America. [NVDA, Item 1. Business] \n\n- **Key Wafer\u2011Dependency Risks** \n - **Supply Guarantees & Capacity** \u2013 Lack of guaranteed component and wafer capacity; decommitment by suppliers; higher wafer/component prices if demand is mis\u2011estimated. [NVDA, Item 1A. Risk Factors] \n - **Foundry Performance** \u2013 Failure to procure raw materials, provide adequate capacity, or develop/implement advanced process technologies (e.g., smaller geometry nodes). [NVDA, Item 1A. Risk Factors] \n - **Supplier Concentration** \u2013 Limited number and geographic concentration of suppliers; loss of a supplier can cause additional expense and production delays. [NVDA, Item 1A. Risk Factors] \n - **Control & Quality** \u2013 Lack of direct control over product quantity, quality, and delivery schedules; integration complexity when adding new suppliers or subcontractors. [NVDA, Item 1A. Risk Factors] \n - **Geopolitical & Operational Exposure** \u2013 International sales (31\u202f% of FY\u202f2026 revenue outside the U.S.) expose NVIDIA to political, economic, and regulatory risks that can affect supply chain reliability. [NVDA, Item 1A. Risk Factors] \n\n### Comparative Synthesis & Key Differences \n| Aspect | AMD | NVIDIA |\n|--------|-----|--------|\n| **Foundry Breadth** | Uses four major foundries (GF, TSMC, UMC, Samsung) plus ATMP joint ventures for packaging. | Relies on two primary foundries (TSMC, Samsung) with a broader fabless ecosystem. |\n| **Wafer\u2011Supply Agreements** | Long\u2011term wafer\u2011supply agreement with GF, specifying minimum capacity and pricing through 2026. | No explicit long\u2011term capacity agreements cited; risk factors focus on supply uncertainty and capacity decommitments. |\n| **Inventory Risk** | Explicit risk of excess inventory if wafer needs fall below target. | Focuses on higher prices and inventory orders to secure capacity during growth. |\n| **Control Over Production** | Limited control over delivery, yield, and quality; risk of IP misappropriation. | Explicitly notes lack of direct control over quantity, quality, and delivery; integration complexity. |\n| **Disruption Triggers** | Facility damage, power outages, water shortages, high\u2011heat events, financial distress of suppliers. | Similar disruptions plus decommitment, raw\u2011material shortages, and failure to adopt new process technologies. |\n| **Geopolitical Exposure** | International sales 67\u202f% of revenue; operations worldwide, including Asia, Europe, U.S., Canada, Latin America. | International sales 31\u202f% of FY\u202f2026 revenue; operations mainly in Asia with expansion into U.S. and Latin America. |\n\n**Bottom line:** \nAMD\u2019s wafer\u2011dependency strategy is anchored by a formal, long\u2011term agreement with GlobalFoundries and a diversified set of foundry partners, but it faces inventory and supply\u2011control risks tied to that agreement. NVIDIA, operating a pure fabless model, relies on TSMC and Samsung without a disclosed long\u2011term capacity contract, exposing it to broader supply\u2011chain uncertainty, higher price volatility, and greater geopolitical risk due to its international sales concentration.",
+      "latency_sec": 35.786,
+      "input_tokens": 3787,
+      "output_tokens": 1835,
+      "total_tokens": 5622,
+      "cost_usd": 0.000746,
+      "retrieved_chunk_count": 8,
+      "retrieved_tickers": [
+        "AMD",
+        "NVDA"
+      ],
+      "citation_count": 4,
+      "citations": [
+        {
+          "ticker": "AMD",
+          "section": "ITEM 15.",
+          "citation_text": "[AMD, ITEM 15.]"
+        },
+        {
+          "ticker": "AMD",
+          "section": "ITEM 1A. RISK FACTORS",
+          "citation_text": "[AMD, ITEM 1A. RISK FACTORS]"
+        },
+        {
+          "ticker": "NVDA",
+          "section": "Item 1. Business",
+          "citation_text": "[NVDA, Item 1. Business]"
+        },
+        {
+          "ticker": "NVDA",
+          "section": "Item 1A. Risk Factors",
+          "citation_text": "[NVDA, Item 1A. Risk Factors]"
+        }
+      ],
+      "status": "ACCEPTED",
+      "max_rerank_score": 0.7435
+    },
+    "eval": {
+      "baseline_entity_balance": true,
+      "multi_agent_entity_balance": true,
+      "baseline_guardrail_pass": true,
+      "multi_agent_guardrail_pass": true,
+      "token_savings_pct": -74.3,
+      "cost_savings_pct": -68.8
+    }
+  },
+  {
+    "test_case": {
+      "id": "Q3_CROSS_ENTITY_STRATEGY",
+      "category": "Cross-Company Strategic & Geopolitical Risks",
+      "query": "How do Apple and Tesla differ in their 10-K risk disclosures regarding China manufacturing and import tariffs?",
+      "expected_entities": [
+        "AAPL",
+        "TSLA"
+      ],
+      "critical_facts": [
+        "outsourc",
+        "tariff"
+      ]
+    },
+    "baseline": {
+      "pipeline": "Baseline Naive RAG",
+      "answer": "Apple\u2019s 10\u2011K risk disclosures focus on the *impact* of U.S. tariffs and trade disputes in general.  The company warns that new tariffs on imports from China, India, Japan, South Korea, Taiwan, Vietnam and the EU could hurt its supply chain, raw\u2011material availability, pricing and gross margin, and that the overall macro\u2011economic fallout could reduce consumer demand.  Apple does **not** discuss its own manufacturing footprint in China or how it might shift production in response to tariffs.\n\nTesla\u2019s filings, by contrast, explicitly tie tariffs to its *manufacturing strategy*.  The risk factors note that U.S. tariff increases have already raised the cost of vehicles made in the United States and that the company has built or is expanding manufacturing facilities in China and Germany to lower transportation costs and mitigate tariff exposure.  Tesla also highlights that certain components are hard to source domestically and that tariffs could raise costs for U.S.\u2011made vehicles and exported models.\n\n**Bottom line:** Apple talks about tariffs as a potential cost and supply\u2011chain risk without mentioning China manufacturing; Tesla discusses tariffs and how its China (and German) plants are part of its response to those tariffs.",
+      "latency_sec": 29.375,
+      "retrieval_latency_sec": 0.182,
+      "input_tokens": 2186,
+      "output_tokens": 737,
+      "total_tokens": 2923,
+      "cost_usd": 0.000366,
+      "retrieved_chunk_count": 6,
+      "retrieved_tickers": [
+        "AAPL",
+        "TSLA"
+      ],
+      "citation_count": 0,
+      "citations": [],
+      "status": "ANSWERED"
+    },
+    "multi_agent": {
+      "pipeline": "Advanced Multi-Agent RAG",
+      "answer": "### Apple vs. Tesla: 10\u2011K Risk Disclosures on China Manufacturing & Import Tariffs \n\n#### Apple \u2013 Key Themes \n- **Geographic Concentration & Single\u2011Source Dependence** \n - Apple\u2019s manufacturing is \u201cperformed in whole or in part by outsourcing partners located primarily in China mainland, India, Japan, South Korea, Taiwan and Vietnam\u201d and relies on \u201csingle\u2011source partners in the U.S., Asia and Europe\u201d for many components and final assembly. [AAPL, Item 1A. Risk Factors] \n- **Tariff Exposure & Trade Investigations** \n - Apple highlights the U.S. Department of Commerce\u2019s Section\u202f232 investigation into semiconductor imports and the potential for \u201cadditional sector\u2011based tariffs or other measures.\u201d The company notes that \u201ctariffs and other measures that are applied to the Company\u2019s products or their components can have a material adverse impact on the Company\u2019s business, results of operations and financial condition, including impacting the Company\u2019s supply chain, the availability of rare earths and other raw materials and components, pricing and gross margin.\u201d [AAPL, Item 1A. Risk Factors] \n - Apple also warns that \u201crestrictions on international trade, such as tariffs and other controls on imports or exports of goods, technology or data, can materially adversely affect the Company\u2019s business and supply chain,\u201d especially if they target regions where Apple derives a significant portion of its revenues. [AAPL, Item 1A. Risk Factors] \n- **Operational Flexibility & Quality Risks** \n - The reliance on outsourced manufacturing \u201creduces the Company\u2019s direct control over production and distribution,\u201d potentially affecting cost, quality, or quantity of products and limiting flexibility to respond to changing conditions. [AAPL, Item 1A. Risk Factors] \n\n#### Tesla \u2013 Key Themes \n- **Manufacturing Footprint & Tariff Impact** \n - Tesla\u2019s manufacturing includes U.S. plants (California, New York, Texas, Nevada) and international sites in China and Germany. The company notes that \u201cU.S. special tariff actions have increased our costs for vehicles manufactured in the United States and increased costs for those same vehicles when exported from the United States.\u201d [TSLA, ITEM 1A. RISK FACTORS] \n- **Tariff\u2011Related Cost & Demand Concerns** \n - Tesla explicitly states that \u201cretaliatory tariffs imposed by other countries on U.S. exports, further increases in U.S. tariffs, and the uncertainties surrounding domestic and foreign tariffs have impacted the pricing for our products, which could adversely impact demand.\u201d [TSLA, ITEM 1A. RISK FACTORS] \n - The company also cautions that \u201cthe exact scope of any such tariffs that will ultimately be implemented is not known at this time, and the impacts on our business and costs of our products is uncertain.\u201d [TSLA, ITEM 1A. RISK FACTORS] \n- **Supply\u2011Chain Constraints** \n - Tesla acknowledges that while it strives for a strong domestic supply chain, \u201ccertain parts and components are difficult or impossible to source within the United States,\u201d implying a reliance on imports that could be affected by tariffs. [TSLA, ITEM 1A. RISK FACTORS] \n\n#### Comparative Synthesis \n| Aspect | Apple | Tesla |\n|--------|-------|-------|\n| **Manufacturing Concentration** | Heavy reliance on outsourced partners in China and other Asian countries; single\u2011source partners for many components. | Owns manufacturing facilities in the U.S. and abroad (China, Germany); still depends on imported parts for some components. |\n| **Tariff Focus** | Emphasis on potential U.S. tariffs, reciprocal tariffs, and trade investigations that could affect supply chain, raw\u2011material availability, pricing, and gross margin. | Emphasis on how U.S. tariffs and retaliatory tariffs raise production costs and affect pricing and demand, with uncertainty about future tariff scope. |\n| **Risk Narrative** | Concentrates on supply\u2011chain disruption, loss of control, and quality/quantity risks stemming from outsourcing and tariff\u2011related supply constraints. | Concentrates on cost escalation, pricing pressure, and demand uncertainty due to tariff changes, plus limited domestic sourcing for key components. |\n| **Geographic Specificity** | Explicitly lists China, India, Japan, South Korea, Taiwan, Vietnam, and the EU as tariff\u2011affected regions. | Mentions China and Germany as manufacturing sites but focuses on U.S. tariffs and their global ripple effects. |\n\n**Bottom Line:** \nApple\u2019s risk disclosures foreground the vulnerability of its heavily outsourced, China\u2011centric supply chain to tariff\u2011driven disruptions and the broader trade\u2011policy environment, stressing supply\u2011chain control and quality risks. Tesla, while also exposed to tariffs, frames the risk primarily in terms of cost escalation for U.S.\u2011manufactured vehicles, pricing pressure, and demand uncertainty, with an added note on the difficulty of sourcing certain components domestically.",
+      "latency_sec": 33.41,
+      "input_tokens": 3815,
+      "output_tokens": 1331,
+      "total_tokens": 5146,
+      "cost_usd": 0.000648,
+      "retrieved_chunk_count": 8,
+      "retrieved_tickers": [
+        "AAPL",
+        "TSLA"
+      ],
+      "citation_count": 2,
+      "citations": [
+        {
+          "ticker": "AAPL",
+          "section": "Item 1A. Risk Factors",
+          "citation_text": "[AAPL, Item 1A. Risk Factors]"
+        },
+        {
+          "ticker": "TSLA",
+          "section": "ITEM 1A. RISK FACTORS",
+          "citation_text": "[TSLA, ITEM 1A. RISK FACTORS]"
+        }
+      ],
+      "status": "ACCEPTED",
+      "max_rerank_score": 0.9561
+    },
+    "eval": {
+      "baseline_entity_balance": true,
+      "multi_agent_entity_balance": true,
+      "baseline_guardrail_pass": true,
+      "multi_agent_guardrail_pass": true,
+      "token_savings_pct": -76.1,
+      "cost_savings_pct": -77.0
+    }
+  },
+  {
+    "test_case": {
+      "id": "Q4_OUT_OF_SCOPE_ENTITY",
+      "category": "Out-of-Scope Unindexed Corporate Entity",
+      "query": "What was Walt Disney's (DIS) direct-to-consumer streaming operating income in FY 2024?",
+      "expected_entities": [
+        "DIS"
+      ],
+      "is_unindexed": true
+    },
+    "baseline": {
+      "pipeline": "Baseline Naive RAG",
+      "answer": "I\u2019m sorry, but I don\u2019t have that information.",
+      "latency_sec": 17.663,
+      "retrieval_latency_sec": 0.252,
+      "input_tokens": 1817,
+      "output_tokens": 83,
+      "total_tokens": 1900,
+      "cost_usd": 0.000198,
+      "retrieved_chunk_count": 6,
+      "retrieved_tickers": [
+        "NFLX"
+      ],
+      "citation_count": 0,
+      "citations": [],
+      "status": "ANSWERED"
+    },
+    "multi_agent": {
+      "pipeline": "Advanced Multi-Agent RAG",
+      "answer": "Form 10-K Filing Not Indexed: DIS, Disney (DIS), Walt Disney (DIS) is not in our 10-K filing database. This system currently indexes Form 10-K filings for: AAPL, AMD, AMZN, CRM, GOOGL, META, MSFT, NFLX, NVDA, TSLA.",
+      "latency_sec": 0.002,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "cost_usd": 0.0,
+      "retrieved_chunk_count": 0,
+      "retrieved_tickers": [],
+      "citation_count": 0,
+      "citations": [],
+      "status": "ABSTAINED_PRE_FLIGHT",
+      "max_rerank_score": 0.0
+    },
+    "eval": {
+      "baseline_entity_balance": true,
+      "multi_agent_entity_balance": true,
+      "baseline_guardrail_pass": false,
+      "multi_agent_guardrail_pass": true,
+      "token_savings_pct": 100.0,
+      "cost_savings_pct": 100.0
+    }
+  },
+  {
+    "test_case": {
+      "id": "Q5_IRRELEVANT_DOMAIN",
+      "category": "Irrelevant / Non-Financial Domain Query",
+      "query": "What is the best recipe for baking a homemade banana bread cake?",
+      "expected_entities": [],
+      "is_non_financial": true
+    },
+    "baseline": {
+      "pipeline": "Baseline Naive RAG",
+      "answer": "I\u2019m sorry, but the provided context does not contain any information about banana bread recipes. I don\u2019t have an answer to that.",
+      "latency_sec": 5.702,
+      "retrieval_latency_sec": 0.177,
+      "input_tokens": 1418,
+      "output_tokens": 119,
+      "total_tokens": 1537,
+      "cost_usd": 0.000166,
+      "retrieved_chunk_count": 6,
+      "retrieved_tickers": [
+        "AMZN",
+        "AAPL"
+      ],
+      "citation_count": 0,
+      "citations": [],
+      "status": "ANSWERED"
+    },
+    "multi_agent": {
+      "pipeline": "Advanced Multi-Agent RAG",
+      "answer": "I could not find relevant evidence in the indexed Form 10-K filings to answer this question. Please ask a financial or SEC reporting question concerning our indexed companies (AAPL, AMD, AMZN, CRM, GOOGL, META, MSFT, NFLX, NVDA, TSLA).",
+      "latency_sec": 0.005,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "total_tokens": 0,
+      "cost_usd": 0.0,
+      "retrieved_chunk_count": 0,
+      "retrieved_tickers": [],
+      "citation_count": 0,
+      "citations": [],
+      "status": "ABSTAINED_PRE_FLIGHT",
+      "max_rerank_score": 0.0
+    },
+    "eval": {
+      "baseline_entity_balance": true,
+      "multi_agent_entity_balance": true,
+      "baseline_guardrail_pass": false,
+      "multi_agent_guardrail_pass": true,
+      "token_savings_pct": 100.0,
+      "cost_savings_pct": 100.0
+    }
+  }
+]

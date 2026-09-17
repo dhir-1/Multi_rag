@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import asyncio
+import re
 from typing import Optional, Any
 from dotenv import load_dotenv
 
@@ -52,20 +53,26 @@ class AuditedChatGroq(ChatGroq):
 
         print(f"[LLM INVOCATION] Model: {self.model_name} | Call #{call_id} (temp={self.temperature}, max_tokens={self.max_tokens})")
 
-        max_retries = 5
-        base_delays = [5, 10, 20, 30, 45]
+        max_retries = 8
+        base_delays = [5, 10, 20, 30, 45, 60, 90, 120]
 
         for attempt in range(max_retries):
             try:
                 return super()._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
             except Exception as e:
                 err_str = str(e)
-                is_rate_limit = any(k in err_str.lower() for k in ["rate_limit", "429", "tpm", "rpm", "too many requests", "resource_exhausted"])
+                is_rate_limit = any(k in err_str.lower() for k in ["rate_limit", "429", "tpd", "tpm", "rpm", "too many requests", "resource_exhausted"])
                 is_transient = any(k in err_str.lower() for k in ["timeout", "connection", "503", "502", "500", "overloaded"])
                 if (is_rate_limit or is_transient) and attempt < max_retries - 1:
-                    wait_time = base_delays[attempt]
-                    print(f"  [!] Rate limit/Transient error on {self.model_name}: {err_str[:120]}...")
-                    print(f"  [!] Retrying in {wait_time}s (attempt {attempt+1}/{max_retries}) on SAME model ({self.model_name})...")
+                    wait_time = base_delays[min(attempt, len(base_delays)-1)]
+                    # Extract exact wait time if Groq provides it (e.g., 'Please try again in 5m32.64s')
+                    match = re.search(r'try again in (?:(\d+)m)?(\d+(?:\.\d+)?s?)', err_str)
+                    if match:
+                        mins = float(match.group(1)) if match.group(1) else 0.0
+                        sec_str = match.group(2).rstrip('s') if match.group(2) else "0"
+                        wait_time = int(mins * 60 + float(sec_str)) + 3
+                    print(f"  [!] Rate limit/Transient on {self.model_name}: {err_str[:110]}...")
+                    print(f"  [!] Waiting {wait_time}s before retry (attempt {attempt+1}/{max_retries}) on SAME model ({self.model_name})...")
                     time.sleep(wait_time)
                 else:
                     print(f"  [!] LLM Call #{call_id} failed on {self.model_name}: {err_str[:160]}")

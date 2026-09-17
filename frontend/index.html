@@ -620,22 +620,22 @@
         <input 
           type="text" 
           id="queryInput" 
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="e.g. How many questions does FinExam-10K contain?" 
+          autocomplete="off" 
+          spellcheck="false" 
+          placeholder="e.g. What was NVIDIA's revenue concentration in fiscal 2024?" 
           required
         />
       </div>
 
       <!-- Surrealist Whispers / Quick Prompts -->
       <div class="whispers">
-        <span class="whisper-link" onclick="prefill('How does CamoDocs evade clustering defenses like TrustRAG in retrieval-augmented generation?')">inquire into CamoDocs</span>
+        <span class="whisper-link" onclick="prefill('What were NVIDIA Compute and Networking segment revenue figures in fiscal 2024?')">NVIDIA segment revenue</span>
         <span>•</span>
-        <span class="whisper-link" onclick="prefill('Give an overview of the Twin Worlds paper and what problem it addresses.')">inquire into Twin Worlds</span>
+        <span class="whisper-link" onclick="prefill('Compare Apple and Tesla supply chain and tariff risk factor disclosures in Item 1A.')">Apple vs Tesla tariff risks</span>
         <span>•</span>
-        <span class="whisper-link" onclick="prefill('What are the two evaluation tracks in FinExam-10K, and how many items are in each?')">inquire into FinExam-10K</span>
+        <span class="whisper-link" onclick="prefill('According to Microsoft\'s 10-K, what was reported for Azure revenue growth?')">Microsoft Azure growth</span>
         <span>•</span>
-        <span class="whisper-link" onclick="prefill('What is Machine Learning?')">test the corpus limits</span>
+        <span class="whisper-link" onclick="prefill('What was Tesla revenue from Optimus robot in 2024?')">test unreleased product</span>
       </div>
 
       <div class="button-row">
@@ -876,10 +876,10 @@
           // Format Citations
           let citations = data.citations || [];
           if (citations.length === 0 && rawAnswer) {
-            const pattern = /\[([0-9]{4}\.[0-9]{4,5}(?:v[0-9]+)?)[,\s]+([^,\]]+)[,\s]+(?:Page\s+)?([0-9]+)\]/gi;
+            const pattern = /\[([A-Za-z0-9\.\s]+)[,\s]+([^,\]]+)\]/gi;
             let m;
             while ((m = pattern.exec(rawAnswer)) !== null) {
-              citations.push({ paper_id: m[1], section: m[2].trim(), page: m[3].trim() });
+              citations.push({ ticker: m[1].trim(), section: m[2].trim() });
             }
           }
 
@@ -890,20 +890,23 @@
             const candidateChunks = data.reranked_chunks || data.retrieved_chunks || [];
 
             citations.forEach((c, idx) => {
+              const entityId = c.ticker || c.paper_id || '10-K';
+              const sectionName = c.section || 'General';
+
               // Find matching chunk text from candidates
               let matched = candidateChunks.find(ch => {
                 const m = ch.metadata || {};
-                const pidMatch = m.paper_id === c.paper_id;
-                const secMatch = c.section && m.section && m.section.toLowerCase().includes(c.section.toLowerCase());
-                const pgMatch = c.page && String(m.page_num) === String(c.page);
-                return pidMatch && (secMatch || pgMatch);
+                const tkrMatch = m.ticker && (m.ticker.toLowerCase() === entityId.toLowerCase());
+                const pidMatch = m.paper_id && (m.paper_id.toLowerCase() === entityId.toLowerCase());
+                const secMatch = m.section && sectionName && m.section.toLowerCase().includes(sectionName.toLowerCase());
+                return (tkrMatch || pidMatch) && secMatch;
               });
 
               if (!matched && candidateChunks[idx]) {
                 matched = candidateChunks[idx];
               }
 
-              const rawExcerpt = matched ? matched.text.trim() : `Evidence passage resolved from ${c.paper_id} (${c.section}).`;
+              const rawExcerpt = matched ? matched.text.trim() : `Evidence passage resolved from ${entityId} (${sectionName}).`;
               const safeExcerpt = rawExcerpt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
               const li = document.createElement('li');
@@ -911,9 +914,9 @@
               li.innerHTML = `
                 <div class="evidence-row" onclick="toggleEvidence(${idx})">
                   <span class="ev-num">[${idx + 1}]</span>
-                  <span class="ev-pid">${c.paper_id}</span>
+                  <span class="ev-pid">${entityId}</span>
                   <span class="ev-sep">—</span>
-                  <span class="ev-meta">${c.section}${c.page ? ', p.' + c.page : ''}</span>
+                  <span class="ev-meta">${sectionName}${c.page ? ', p.' + c.page : ''}</span>
                   <span class="ev-cue" id="evCue-${idx}">+ excerpt</span>
                 </div>
                 <div class="evidence-drawer" id="evDrawer-${idx}" style="display: none;">

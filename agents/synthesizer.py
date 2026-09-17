@@ -1,8 +1,8 @@
 """
-Synthesizer Agent Node for Multi-Agent RAG.
+Synthesizer Agent Node for Multi-Agent Financial RAG.
 
-Synthesizes a comprehensive, evidence-grounded research answer from retrieved chunks.
-Enforces strict inline source citations in the format [Paper_ID, Section, Page X]
+Synthesizes a comprehensive, evidence-grounded financial answer from retrieved 10-K chunks.
+Enforces strict inline source citations in the format [TICKER, Section]
 and extracts structured citation references.
 """
 
@@ -17,37 +17,69 @@ if PROJECT_ROOT not in sys.path:
 
 from agents.state import AgentState
 from agents.llm import get_llm
+from agents.memory import get_episodic_memory
 from config import compute_token_cost
 
-SYNTHESIZER_SYSTEM_PROMPT = """You are an expert Academic Research Synthesizer.
-Provide an accurate, in-depth, and completely evidence-grounded answer to the user's research query based ONLY on the provided context passages.
+SYNTHESIZER_SYSTEM_PROMPT = """You are an expert Enterprise Financial Research Synthesizer.
+Provide an accurate, in-depth, and completely evidence-grounded answer to the user's financial question based ONLY on the provided Form 10-K context passages.
 
-Strict Citation and Grounding Rules:
-1. Every factual claim, metric, or technique MUST be backed by an inline citation: [Paper_ID, Section, Page X].
-   Example: "CamoDocs optimizes dispersion tokens to evade clustering defenses [2608.28389v1, Method, Page 3]."
-2. Do NOT hallucinate or assume unstated information.
-3. If evidence is insufficient, explicitly state what is missing.
-4. Format in clean, readable Markdown.
+Strict Grounding & Professional Presentation Rules:
+1. Strict Citation Enum: Every factual claim, financial figure, percentage, or risk factor MUST be backed by an inline citation in the exact format: [TICKER, Section].
+   Allowed TICKER values are strictly limited to the registered SEC reporting companies:
+   - AAPL (Apple Inc.)
+   - MSFT (Microsoft Corporation)
+   - AMZN (Amazon.com, Inc.)
+   - GOOGL (Alphabet Inc.)
+   - META (Meta Platforms, Inc. / Facebook / Instagram)
+   - NVDA (NVIDIA Corporation)
+   - AMD (Advanced Micro Devices, Inc.)
+   - TSLA (Tesla, Inc.)
+   - NFLX (Netflix, Inc.)
+   - CRM (Salesforce, Inc.)
+   Examples: [META, Item 7], [META, Item 1A], [AAPL, Item 1], [MSFT, Item 8], [NVDA, Item 7], [NFLX, Item 15].
+   Generic tags like [SOURCE 1], [Passage 1], or [Doc 1] are STRICTLY PROHIBITED and will be rejected.
+
+2. Presentation Formatting Standards (No Forced Tables on Single Companies & No Wall-of-Text Blobs):
+   - Single-Company Deep Dives (e.g., Netflix transaction, Salesforce RPO, Alphabet litigation, Meta metrics):
+     Do NOT force a table. Instead, structure your response as an executive briefing using clean Markdown section headings (###) and structured bullet points with bold lead-ins.
+     Example:
+     ### Overview & Current Status
+     ...
+     ### Key Terms & Financial Commitments
+     - **Cash Consideration:** ... [NFLX, Item 15]
+     - **Financing Structure:** ... [NFLX, Item 15]
+     ### Operational & Regulatory Conditions
+     ...
+   - Cross-Company Qualitative Comparisons (Risks, Geopolitics, Foundry Dependencies, Cloud Rivalry):
+     Use structured narrative sections with clear sub-headings:
+     ### [Company A]: [Key Disclosure Theme]
+     ### [Company B]: [Key Disclosure Theme]
+     ### Comparative Synthesis & Key Differences
+   - Cross-Company Quantitative Comparisons (Numerical Line Items: CapEx, Revenues, Margins):
+     Use a clean Markdown table with explicit columns:
+     | Company | Metric / Topic | Disclosed 10-K Value | Citation |
+     | :--- | :--- | :--- | :--- |
+     followed by 2 to 3 analytical takeaways.
+   - Non-Redundancy Rule: NEVER repeat the same facts twice. If a table is used for numbers, do NOT write a giant summary paragraph repeating the identical table text.
+   - Readability: Keep paragraphs concise (2-4 sentences max). Use bold lead-in bullets to prevent dense, unreadable text walls.
+
+3. Substantive Analytical Depth:
+   Provide thorough, executive-grade financial analysis (typically 200–350 words). Unpack management commentary, operational nuances, contract terms, and specific risk mechanisms stated in the 10-K excerpts. Do NOT arbitrarily truncate answers to shallow 1-sentence bullets.
+
+4. Closed-World Assumption & Non-Disclosure: Do NOT hallucinate, infer, or extrapolate beyond the provided text. If the provided excerpts do not explicitly confirm a transaction, marketing dollar figure, or specific metric requested by the user, state clearly and affirmatively: "The provided Form 10-K excerpts do not disclose [requested topic]." Never fabricate or estimate a figure not directly reported in the text.
+
+5. Exact Entity Grounding: When naming external corporate entities, suppliers, foundries, or commercial partners, use exact verbatim naming as written in the filing excerpts. If an external entity is not explicitly named in the text (e.g. designated anonymously as "Customer A" or "third-party foundry"), state explicitly that the entity is not identified by name in the filing.
+
+Keep internal reasoning concise and output the final grounded answer immediately.
 """
 
-WHOLE_DOC_SYSTEM_PROMPT = """You are an expert Academic Research Synthesizer providing a comprehensive whole-document synthesis.
-Provide an accurate, structured, and completely evidence-grounded answer to the user's research query based ONLY on the provided context passages.
+FAST_PATH_SYSTEM_PROMPT = """You are an expert Financial Research Assistant.
+Provide a direct, factual answer to the user's question in 1-2 concise sentences based ONLY on the provided 10-K passages.
 
-Strict Citation and Grounding Rules:
-1. Every factual claim, metric, or technique MUST be backed by an inline citation: [Paper_ID, Section, Page X].
-2. Do NOT hallucinate or assume unstated information.
-3. If evidence is insufficient, explicitly state what is missing.
-4. Format in clean, readable Markdown.
-5. Table Conciseness: When providing multi-stage breakdowns or comparative defense tables, keep each table cell concise (1-2 sentences) to ensure all stages and defenses are fully represented without exceeding length limits.
-"""
-
-SIMPLE_DIRECT_SYSTEM_PROMPT = """You are an expert Academic Research Assistant.
-Provide a direct, factual answer to the user's question in 1-2 concise sentences based ONLY on the provided context passages.
-
-Strict Fast-Path Rules:
-1. Answer directly and concisely in 1-2 sentences.
-2. Include exactly ONE inline citation per distinct factual claim: [Paper_ID, Section, Page X].
-3. Do NOT add unstated background context, speculative analysis, or lengthy introductory/concluding remarks.
+Strict Fast-Path Schema Rules:
+1. Strict Citation Enum: Include inline citations for each distinct fact/number in the exact format: [TICKER, Section]. TICKER must strictly be one of the registered companies: AAPL, MSFT, AMZN, GOOGL, META, NVDA, AMD, TSLA, NFLX, CRM (e.g. [META, Item 7], [AAPL, Item 1]). Never use [SOURCE 1].
+2. Directness: Answer directly and concisely in 1-2 sentences.
+3. Strict Non-Disclosure Rule: If the provided excerpts do not disclose the requested figure or transaction, state clearly that the filing does not disclose it rather than guessing.
 4. Output clean Markdown.
 """
 
@@ -57,17 +89,18 @@ def _format_context_passages(chunks: List[Dict[str, Any]]) -> str:
     context_blocks = []
     for idx, c in enumerate(chunks, 1):
         meta = c.get("metadata", {})
-        pid = meta.get("paper_id", "Unknown")
-        title = meta.get("paper_title", "Unknown")
+        ticker = meta.get("ticker", meta.get("paper_id", "Unknown"))
+        company = meta.get("company", "Unknown")
         sec = meta.get("section", "General")
-        page = meta.get("page_num", "?")
+        sec_short = sec.split("–")[0].split("-")[0].strip()
         text = c.get("text", "").strip()
 
         block = (
-            f"--- [SOURCE {idx}] ---\n"
-            f"Paper ID: {pid} | Title: {title}\n"
-            f"Section: {sec} (Page {page})\n"
-            f"Content: {text}\n"
+            f"--- [PASSAGE {idx}] ---\n"
+            f"Company: {company} ({ticker})\n"
+            f"Section: {sec}\n"
+            f"Citation Tag: [{ticker}, {sec_short}]\n"
+            f"Content:\n{text}\n"
         )
         context_blocks.append(block)
 
@@ -75,41 +108,24 @@ def _format_context_passages(chunks: List[Dict[str, Any]]) -> str:
 
 
 def _extract_citations(text: str) -> List[Dict[str, str]]:
-    """Extracts all [Paper_ID, Section, Page X] citations from generated text."""
-    pattern = r"\[([0-9]{4}\.[0-9]{4,5}(?:v[0-9]+)?)[,\s]+([^,\]]+)[,\s]+(?:Page\s+)?([0-9]+)\]"
-    matches = re.findall(pattern, text, re.IGNORECASE)
+    """Extracts all [TICKER, Section] citations from generated text."""
+    pattern = r"\[([A-Z]{1,5}|[A-Za-z\s]+),\s*([^\]]+)\]"
+    matches = re.findall(pattern, text)
 
     citations = []
     seen = set()
     for m in matches:
-        key = (m[0], m[1].strip(), m[2].strip())
+        ticker = m[0].strip()
+        sec = m[1].strip()
+        key = (ticker, sec)
         if key not in seen:
             seen.add(key)
             citations.append({
-                "paper_id": m[0],
-                "section": m[1].strip(),
-                "page": m[2].strip(),
-                "citation_text": f"[{m[0]}, {m[1].strip()}, Page {m[2].strip()}]"
+                "ticker": ticker,
+                "section": sec,
+                "citation_text": f"[{ticker}, {sec}]"
             })
     return citations
-
-
-def _generate_dry_run_answer(query: str, chunks: List[Dict[str, Any]], error_msg: str = None) -> str:
-    """Generates a structured dry-run answer when GROQ_API_KEY is not configured or an API error occurs."""
-    first_chunk = chunks[0] if chunks else {}
-    meta = first_chunk.get("metadata", {})
-    pid = meta.get("paper_id", "Unknown")
-    sec = meta.get("section", "General")
-    pg = meta.get("page_num", 1)
-    snippet = first_chunk.get("text", "")[:250].strip() if first_chunk else "No evidence available"
-
-    note = f"> *Note: {error_msg}*" if error_msg else "> *Note: Running in dry-run mode until GROQ_API_KEY is configured in .env.*"
-    return (
-        f"### Research Synthesis (Dry-Run Mode)\n\n"
-        f"**User Query:** {query}\n\n"
-        f"Based on the retrieved research evidence, {snippet} [{pid}, {sec}, Page {pg}].\n\n"
-        f"{note}"
-    )
 
 
 def synthesize_answer(state: AgentState) -> Dict[str, Any]:
@@ -130,106 +146,84 @@ def synthesize_answer(state: AgentState) -> Dict[str, Any]:
         p = state.get("prompt_tokens", 0)
         c = state.get("completion_tokens", 0)
         return {
-            "draft_answer": "I could not find relevant evidence in the indexed research papers to answer this question.",
+            "draft_answer": "I could not find relevant evidence in the indexed Form 10-K filings to answer this question.",
             "citations": [],
             "final_status": "ABSTAINED",
             "total_cost_usd": compute_token_cost(p, c)
         }
 
-    route = state.get("route", "pinpoint_retrieval")
-    if route == "whole_document":
-        route_max_tokens = 8192
-        system_prompt = WHOLE_DOC_SYSTEM_PROMPT
-    elif route == "simple_direct":
+    route = state.get("route", "multi_agent")
+    if route in ["fast_path", "simple_direct"]:
         route_max_tokens = 1024
-        system_prompt = SIMPLE_DIRECT_SYSTEM_PROMPT
+        system_prompt = FAST_PATH_SYSTEM_PROMPT
     else:
-        route_max_tokens = 4096
+        route_max_tokens = 6000
         system_prompt = SYNTHESIZER_SYSTEM_PROMPT
 
-    syn_temp = 0.0 if (os.getenv("STRICT_BENCHMARK_MODE", "0") == "1" or os.getenv("BENCHMARK_RUN", "0") == "1") else 0.1
-    llm = get_llm(temperature=syn_temp, max_tokens=route_max_tokens)
+    memory = get_episodic_memory()
+    lessons = memory.get_relevant_lessons(query)
+    if lessons:
+        lesson_block = "\n\nCRITICAL AUDIT RULES / LESSONS LEARNED:\n" + "\n".join(f"- {l}" for l in lessons)
+        system_prompt += lesson_block
+
+    llm = get_llm(temperature=0.0, max_tokens=route_max_tokens)
     if llm is None:
-        if os.getenv("STRICT_BENCHMARK_MODE", "0") == "1" or os.getenv("BENCHMARK_RUN", "0") == "1":
-            raise RuntimeError(
-                "CRITICAL: Cannot synthesize answer in strict/benchmark mode: "
-                "LLM client is None (GROQ_API_KEY is missing or invalid in .env). "
-                "Silent dry-run fallbacks are prohibited during benchmark evaluation."
-            )
-        draft_answer = _generate_dry_run_answer(query, chunks)
-        citations = _extract_citations(draft_answer)
-        print(f"  * Synthesis complete in dry-run mode ({len(citations)} citations).")
-        return {
-            "draft_answer": draft_answer,
-            "citations": citations,
-            "is_dry_run": True,
-            "final_status": "DRY_RUN_MOCK"
-        }
+        raise RuntimeError("LLM client is None (GROQ_API_KEY missing or invalid).")
 
-    try:
-        formatted_context = _format_context_passages(chunks)
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"EVIDENCE CONTEXT:\n{formatted_context}\n\nQUESTION:\n{query}\n\nANSWER:"}
-        ]
-        response = llm.invoke(messages)
-        draft_answer = response.content.strip()
+    formatted_context = _format_context_passages(chunks)
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"EVIDENCE CONTEXT:\n{formatted_context}\n\nQUESTION:\n{query}\n\nANSWER:"}
+    ]
+    response = llm.invoke(messages)
+    draft_answer = response.content.strip() if response.content else ""
 
-        # Protection against reasoning token budget exhaustion:
-        # If response content is empty but previous iteration already had an answer, preserve it.
-        if not draft_answer:
-            if state.get("draft_answer"):
-                print("  [!] Warning: Synthesizer response was empty. Preserving non-empty answer from previous iteration.")
-                draft_answer = state.get("draft_answer")
-            elif hasattr(response, "additional_kwargs") and response.additional_kwargs.get("reasoning_content"):
-                draft_answer = response.additional_kwargs.get("reasoning_content", "").strip()
-
-        citations = _extract_citations(draft_answer)
-        if not citations and state.get("citations"):
-            citations = state.get("citations")
-
-        usage = getattr(response, "usage_metadata", {}) or {}
-        p_tok = state.get("prompt_tokens", 0) + usage.get("input_tokens", 0)
-        c_tok = state.get("completion_tokens", 0) + usage.get("output_tokens", 0)
-        t_tok = state.get("total_tokens", 0) + usage.get("total_tokens", 0)
-
-        print(f"  * Synthesis complete ({len(draft_answer.split())} words, {len(citations)} citations, {usage.get('total_tokens', 0)} tokens).")
-        cost = compute_token_cost(p_tok, c_tok)
-        return {
-            "draft_answer": draft_answer,
-            "citations": citations,
-            "prompt_tokens": p_tok,
-            "completion_tokens": c_tok,
-            "total_tokens": t_tok,
-            "total_cost_usd": cost,
-            "is_dry_run": False,
-            "final_status": "ACCEPTED (Fast Path)" if state.get("route") == "simple_direct" else state.get("final_status", "PENDING_AUDIT")
-        }
-    except Exception as e:
-        if os.getenv("STRICT_BENCHMARK_MODE", "0") == "1" or os.getenv("BENCHMARK_RUN", "0") == "1":
-            raise RuntimeError(
-                f"CRITICAL: LLM synthesis failed during benchmark/strict mode ({e}). "
-                f"Dry-run fallback prohibited."
-            ) from e
-        err_str = str(e)
-        if "429" in err_str or "rate_limit" in err_str.lower():
-            display_err = "Groq API token rate limit reached. Please wait a moment for the quota window to reset."
+    if not draft_answer:
+        additional = getattr(response, "additional_kwargs", {}) or {}
+        reasoning = additional.get("reasoning_content", "")
+        if reasoning:
+            print(f"  [!] Note: Reasoning content captured ({len(reasoning.split())} words).")
+        if state.get("draft_answer"):
+            draft_answer = state.get("draft_answer")
         else:
-            display_err = f"API error encountered: {err_str[:120]}"
-        print(f"  [!] Note: LLM synthesis error ({e}). Using dry-run fallback.")
-        draft_answer = _generate_dry_run_answer(query, chunks, error_msg=display_err)
-        citations = _extract_citations(draft_answer)
-        p_tok = state.get("prompt_tokens", 0)
-        c_tok = state.get("completion_tokens", 0)
-        t_tok = state.get("total_tokens", 0)
-        return {
-            "draft_answer": draft_answer,
-            "citations": citations,
-            "prompt_tokens": p_tok,
-            "completion_tokens": c_tok,
-            "total_tokens": t_tok,
-            "total_cost_usd": compute_token_cost(p_tok, c_tok),
-            "is_dry_run": True,
-            "final_status": "DRY_RUN_MOCK"
-        }
+            draft_answer = "The provided Form 10-K excerpts do not disclose information regarding the requested transaction or metric."
 
+    # Apply deterministic citation sanitization, hallucination scrubbing & post-flight factual audit
+    from agents.verifier import (
+        sanitize_and_validate_citations,
+        scrub_unsupported_hallucinations,
+        audit_claims_deterministically
+    )
+    draft_answer, verified_citations, citation_violations = sanitize_and_validate_citations(draft_answer, chunks)
+    draft_answer = scrub_unsupported_hallucinations(draft_answer, chunks)
+    audit_res = audit_claims_deterministically(draft_answer, chunks)
+
+    unsupported = list(audit_res.get("unsupported_claims", []))
+    if unsupported:
+        print(f"  [!] Factual Audit Warning: {len(unsupported)} claims/citations not evidenced in 10-K text: {unsupported}")
+        # Enforce guardrail: surface audit caveat directly in the response so users/API see it
+        warning_bullets = "\n".join(f"- {c}" for c in unsupported)
+        draft_answer += f"\n\n> ⚠️ **Factual Audit Caveat:** The following figures/citations could not be confirmed in the provided 10-K passages:\n{warning_bullets}"
+
+    citations = verified_citations if verified_citations else _extract_citations(draft_answer)
+    if not citations and state.get("citations"):
+        citations = state.get("citations")
+
+    usage = getattr(response, "usage_metadata", {}) or {}
+    p_tok = state.get("prompt_tokens", 0) + usage.get("input_tokens", 0)
+    c_tok = state.get("completion_tokens", 0) + usage.get("output_tokens", 0)
+    t_tok = state.get("total_tokens", 0) + usage.get("total_tokens", 0)
+
+    print(f"  * Synthesis complete ({len(draft_answer.split())} words, {len(citations)} citations, {usage.get('total_tokens', 0)} tokens).")
+    cost = compute_token_cost(p_tok, c_tok)
+    return {
+        "draft_answer": draft_answer,
+        "citations": citations,
+        "prompt_tokens": p_tok,
+        "completion_tokens": c_tok,
+        "total_tokens": t_tok,
+        "total_cost_usd": cost,
+        "is_grounded": audit_res.get("is_grounded", True),
+        "audit_warnings": unsupported,
+        "final_status": "FLAGGED_UNGROUNDED" if unsupported else "ACCEPTED"
+    }

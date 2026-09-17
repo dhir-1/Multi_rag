@@ -4,7 +4,6 @@
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-orange.svg)](https://github.com/langchain-ai/langgraph)
 [![Groq](https://img.shields.io/badge/LLM-Groq%20(gpt--oss--20b)-green.svg)](https://groq.com)
 [![Retrieval](https://img.shields.io/badge/Retrieval-ChromaDB%20%2B%20BM25-purple.svg)](https://github.com/chroma-core/chroma)
-[![Cost](https://img.shields.io/badge/Stack-100%25%20Free%20%2F%20Local-emerald.svg)](#100-free--local-technology-stack)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An institutional-grade, multi-agent Retrieval-Augmented Generation (RAG) system engineered for deep financial research across **SEC Form 10-K annual reports**. Built on **LangGraph**, the system replaces naive vector search and flaky LLM self-reflection with **4 modern enterprise RAG methods**: dynamic zero-hardcoding filing registration with balanced entity dispatch, CPU-native cross-encoder confidence gating, schema-bounded adaptive synthesis with strict SEC citation enums, and deterministic pre-flight/post-flight mathematical guardrails.
@@ -126,20 +125,6 @@ Full report: [`evaluation/BENCHMARK_REPORT.md`](evaluation/BENCHMARK_REPORT.md) 
 1. **Factual Completeness (Netflix M&A)**: Baseline missed Note 15's credit agreements and literally stated: *"financing arrangements are not known"*. Multi-Agent retrieved the **$42.2B bridge facility**, **$5B revolver**, and **$20B delayed-draw term loan** with exact citations.
 2. **Unindexed Entity Protection (Walt Disney)**: Baseline retrieved Netflix streaming chunks by mistake, burned **1,900 tokens**, and took **17.6 seconds** to say it didn't know. Multi-Agent intercepted in **0.002 seconds at 0 tokens ($0.00)**.
 3. **Foundry Accuracy (AMD vs NVIDIA)**: Baseline claimed NVIDIA named no foundries. Multi-Agent checked Item 1 Business, discovered **TSMC & Samsung**, and detailed AMD's **GlobalFoundries** agreement with 4 verified citations.
-
----
-
-## 100% Free & Local Technology Stack
-
-| Layer | Component | Implementation Details | Cost |
-| :--- | :--- | :--- | :---: |
-| **Orchestration** | `LangGraph` + `LangChain` | StateGraph multi-agent workflow with conditional edges | **$0.00** |
-| **Dense Embeddings** | ChromaDB ONNX Default | Native 384-dimensional local vector embeddings | **$0.00** |
-| **Vector Storage** | `ChromaDB` (Persistent) | Local on-disk persistent vector index | **$0.00** |
-| **Sparse Retrieval** | `rank-bm25` (Okapi) | Local tokenized keyword index for exact financial terms | **$0.00** |
-| **Reranking & Gate** | `FlashRank` (`ms-marco-MiniLM-L-12-v2`) | Local CPU-native cross-encoder inference (ONNX) | **$0.00** |
-| **Synthesis LLM** | Groq (`openai/gpt-oss-20b`) | Developer Free Tier with audited rate-limit backoff | **$0.00** |
-| **Backend API** | `FastAPI` + `Uvicorn` | Asynchronous REST server with CORS and `/health` | **$0.00** |
 
 ---
 

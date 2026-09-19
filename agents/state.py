@@ -14,6 +14,9 @@ class AgentState(TypedDict, total=False):
     """
     # 1. User Input & Routing
     query: str
+    original_query: Optional[str]
+    standalone_query: Optional[str]
+    chat_history: Optional[List[Dict[str, str]]]
     route: str  # 'whole_document', 'pinpoint_retrieval', 'pinpoint_retrieval_fallback', 'simple_direct'
     resolved_paper_id: Optional[str]
     resolved_paper_title: Optional[str]

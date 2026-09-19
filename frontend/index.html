@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Corpus — Academic RAG</title>
+  <title>The Corpus — Multi-Agent Financial RAG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -11,6 +11,7 @@
   <style>
     :root {
       --bg: #F3F1EC;
+      --surface: #FCFAF6;
       --ink: #1A1A1F;
       --muted: #6B6A63;
       --faint: rgba(26, 26, 31, 0.12);
@@ -18,10 +19,13 @@
       --evidence: #4e5b43;
       --caution: #8c6d32;
       --void: #8C4A3A;
+      --border: rgba(26, 26, 31, 0.14);
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(0, 0, 0, 0.03);
     }
 
     body.midnight-mode {
       --bg: #121216;
+      --surface: #18181F;
       --ink: #E6E4DD;
       --muted: #8E8D86;
       --faint: rgba(230, 228, 221, 0.12);
@@ -29,6 +33,8 @@
       --evidence: #7E9E6C;
       --caution: #C2A25D;
       --void: #C46D5D;
+      --border: rgba(230, 228, 221, 0.14);
+      --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
     * {
@@ -45,41 +51,230 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 5rem 1.5rem 7rem;
+      padding: 4.5rem 1.5rem 9rem;
       -webkit-font-smoothing: antialiased;
       position: relative;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    body.midnight-mode input[type="text"] {
-      border-color: rgba(230, 228, 221, 0.22);
+    /* Top Navigation Bar */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3.5rem;
+      background: var(--bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--faint);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      z-index: 50;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
-    body.midnight-mode input[type="text"]:focus {
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink);
+      font-weight: 500;
+      min-width: 0;
+      flex-shrink: 1;
+    }
+
+    .brand-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-title-short {
+      display: none;
+    }
+
+    @media (max-width: 680px) {
+      .brand-title-full { display: none; }
+      .brand-title-short { display: inline; }
+      .nav-btn { padding: 0.35rem 0.5rem; font-size: 0.7rem; }
+    }
+
+    /* Editorial Custom Modal Dialog */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(14, 14, 18, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-backdrop.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .editorial-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.75rem 2rem;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: var(--card-shadow), 0 16px 36px rgba(0, 0, 0, 0.35);
+      transform: scale(0.96) translateY(6px);
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-backdrop.is-active .editorial-modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-kicker {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--void);
+      font-weight: 500;
+      margin-bottom: 0.45rem;
+    }
+
+    .modal-title {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.35rem;
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1.3;
+      margin-bottom: 0.6rem;
+    }
+
+    .modal-desc {
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--muted);
+      margin-bottom: 1.6rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    .modal-btn {
+      padding: 0.45rem 0.95rem;
+      border-radius: 2px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: transparent;
+    }
+
+    .modal-btn-cancel {
+      border: 1px solid var(--faint);
+      color: var(--muted);
+    }
+
+    .modal-btn-cancel:hover {
       border-color: var(--ink);
-      background: rgba(255, 255, 255, 0.05);
-      box-shadow: 0 0 0 1px var(--ink);
+      color: var(--ink);
     }
 
-    body.midnight-mode button.ask-btn {
-      background: var(--ink);
+    .modal-btn-confirm {
+      border: 1px solid var(--void);
+      background: rgba(196, 109, 93, 0.12);
+      color: var(--void);
+      font-weight: 500;
+    }
+
+    .modal-btn-confirm:hover {
+      background: var(--void);
       color: var(--bg);
     }
 
-    body.midnight-mode button.ask-btn:hover:not(:disabled) {
-      background: #FFFFFF;
-      color: #121216;
+    /* Editorial Toast Notifications */
+    .editorial-toast {
+      position: fixed;
+      bottom: 5.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.6rem 1.15rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      box-shadow: var(--card-shadow), 0 8px 24px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 95;
     }
 
-    /* Top-right Theme Toggle */
-    .theme-bar {
-      position: absolute;
-      top: 1.75rem;
-      right: 2rem;
-      z-index: 10;
+    .editorial-toast.is-visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
     }
 
-    .theme-toggle {
+    .toast-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--evidence);
+    }
+
+    .toast-dot.toast-error {
+      background: var(--void);
+    }
+
+    .brand-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--evidence);
+      box-shadow: 0 0 6px var(--evidence);
+      animation: pulseDot 3s infinite ease-in-out;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .nav-btn {
       background: transparent;
       border: 1px solid var(--faint);
       border-radius: 2px;
@@ -92,14 +287,20 @@
       transition: all 0.25s ease;
     }
 
-    .theme-toggle:hover {
+    .nav-btn:hover {
       border-color: var(--ink);
       color: var(--ink);
     }
 
+    .nav-btn-danger:hover {
+      border-color: var(--void);
+      color: var(--void);
+    }
+
+    /* Main Container */
     .container {
       width: 100%;
-      max-width: 680px;
+      max-width: 760px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
@@ -110,18 +311,14 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 2.75rem;
+      margin-bottom: 2rem;
       transition: all 0.4s ease;
       cursor: default;
     }
 
-    .motif-container:hover .motif-svg {
-      transform: translateY(-2px);
-    }
-
     .motif-svg {
-      width: 130px;
-      height: 92px;
+      width: 110px;
+      height: 78px;
       color: var(--ink);
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
@@ -132,77 +329,51 @@
 
     @keyframes eyeContemplate {
       0%, 100% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(0.96); opacity: 0.45; }
+      50% { transform: scale(0.95); opacity: 0.4; }
     }
 
     .motif-caption {
-      margin-top: 0.95rem;
+      margin-top: 0.75rem;
       font-family: 'Newsreader', Georgia, serif;
       font-style: italic;
-      font-size: 1.05rem;
+      font-size: 1rem;
       color: var(--muted);
       letter-spacing: 0.02em;
       transition: color 0.3s ease;
     }
 
-    /* Form & Headline */
-    form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
+    /* Welcome Hero (Shown on start / reset) */
+    .welcome-hero {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .headline {
       font-family: 'Newsreader', Georgia, serif;
-      font-size: 1.6rem;
+      font-size: 1.85rem;
       font-weight: 400;
       color: var(--ink);
-      text-align: center;
-      margin-bottom: 1.35rem;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.015em;
+      margin-bottom: 0.5rem;
     }
 
-    .input-wrapper {
-      width: 100%;
-      margin-bottom: 0.9rem;
-      position: relative;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      background: transparent;
-      border: 1px solid rgba(26, 26, 31, 0.22);
-      border-radius: 2px;
-      padding: 0.95rem 1.15rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.96rem;
-      color: var(--ink);
-      outline: none;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-    }
-
-    input[type="text"]::placeholder {
+    .sub-headline {
+      font-size: 0.88rem;
       color: var(--muted);
-      opacity: 0.6;
+      max-width: 520px;
+      margin: 0 auto 1.5rem;
+      line-height: 1.55;
     }
 
-    input[type="text"]:focus {
-      border-color: var(--ink);
-      background: rgba(255, 255, 255, 0.35);
-      box-shadow: 0 0 0 1px var(--ink);
-    }
-
-    /* Whisper suggestions */
-    .whispers {
+    .starter-whispers {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 0.75rem 1rem;
-      margin-bottom: 1.35rem;
+      gap: 0.6rem 0.85rem;
       font-family: 'Newsreader', Georgia, serif;
       font-style: italic;
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       color: var(--muted);
     }
 
@@ -219,48 +390,102 @@
       border-bottom-color: var(--ink);
     }
 
-    .button-row {
+    /* Chat Thread */
+    .chat-thread {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      gap: 2.5rem;
       width: 100%;
+      margin-bottom: 2rem;
     }
 
-    button.ask-btn {
-      background: var(--ink);
-      color: var(--bg);
-      border: none;
+    /* Turn Items */
+    .chat-turn {
+      width: 100%;
+      animation: turnFadeIn 0.35s ease-out forwards;
+    }
+
+    @keyframes turnFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* User Query Box */
+    .user-turn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--card-shadow);
+    }
+
+    .user-meta-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .user-query-text {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 1.3rem;
+      line-height: 1.45;
+      color: var(--ink);
+      font-weight: 400;
+    }
+
+    /* Contextualized Pill */
+    .context-pill {
+      margin-top: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.73rem;
+      color: var(--muted);
+      background: rgba(75, 68, 104, 0.08);
+      border: 1px solid rgba(75, 68, 104, 0.16);
       border-radius: 2px;
-      padding: 0.65rem 2.5rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.85rem;
+      padding: 0.25rem 0.55rem;
+    }
+
+    body.midnight-mode .context-pill {
+      background: rgba(155, 148, 184, 0.1);
+      border-color: rgba(155, 148, 184, 0.2);
+    }
+
+    .pill-label {
+      text-transform: uppercase;
+      font-size: 0.68rem;
+      opacity: 0.8;
+    }
+
+    .pill-text {
+      color: var(--ink);
       font-weight: 500;
-      letter-spacing: 0.08em;
-      cursor: pointer;
-      transition: all 0.25s ease;
     }
 
-    button.ask-btn:hover:not(:disabled) {
-      background: #33333b;
-      transform: translateY(-1px);
-    }
-
-    button.ask-btn:disabled {
-      opacity: 0.35;
-      cursor: default;
-      transform: none;
+    /* Assistant Turn Box */
+    .assistant-turn {
+      position: relative;
     }
 
     /* Receipt Metadata Row */
     .receipt {
-      margin: 3.5rem 0 2.25rem;
+      margin: 1.5rem 0 1.25rem;
       border-top: 1px solid var(--faint);
       border-bottom: 1px solid var(--faint);
-      padding: 1rem 0;
+      padding: 0.85rem 0;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.4rem;
       font-family: 'Fira Code', monospace;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
     }
 
     .receipt-row {
@@ -268,11 +493,13 @@
       justify-content: space-between;
       align-items: center;
       line-height: 1.5;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
     }
 
     .receipt-cell {
       display: inline-flex;
-      gap: 0.5rem;
+      gap: 0.45rem;
     }
 
     .receipt .k {
@@ -289,15 +516,24 @@
       letter-spacing: 0.02em;
     }
 
-    /* Grounded Answer Text */
-    .answer-section {
-      margin-bottom: 2.5rem;
+    /* Answer Body */
+    .answer-box {
+      margin-bottom: 1.75rem;
     }
 
-    .answer-action-bar {
+    .answer-header {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 0.85rem;
+    }
+
+    .answer-title {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
     }
 
     .copy-btn {
@@ -307,9 +543,8 @@
       font-size: 0.74rem;
       color: var(--muted);
       cursor: pointer;
-      padding: 0.2rem 0.5rem;
-      letter-spacing: 0.04em;
       transition: color 0.2s ease;
+      padding: 0;
     }
 
     .copy-btn:hover {
@@ -351,78 +586,63 @@
     }
 
     .answer-text ul, .answer-text ol {
-      margin: 0.85rem 0 1.25rem 1.5rem;
+      margin: 0.75rem 0 1.25rem 1.5rem;
+      line-height: 1.75;
     }
 
     .answer-text li {
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.45rem;
     }
 
+    /* Citations in markdown */
+    .answer-text code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85em;
+      background: rgba(75, 68, 104, 0.08);
+      color: var(--ink);
+      padding: 0.15rem 0.35rem;
+      border-radius: 2px;
+    }
+
+    /* Markdown Tables */
     .answer-text table {
       width: 100%;
       border-collapse: collapse;
       margin: 1.5rem 0;
       font-size: 0.92rem;
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      line-height: 1.5;
     }
 
     .answer-text th {
-      border-bottom: 1.5px solid var(--ink);
-      padding: 0.6rem 0.8rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--ink);
+      padding: 0.6rem 0.75rem;
       text-align: left;
-      font-weight: 600;
-    }
-
-    .answer-text td {
-      border-bottom: 1px solid var(--faint);
-      padding: 0.6rem 0.8rem;
       color: var(--ink);
     }
 
-    .answer-text blockquote {
-      border-left: 2px solid var(--muted);
-      padding-left: 1.1rem;
-      margin: 1.25rem 0;
-      font-style: italic;
-      color: #4a4943;
+    .answer-text td {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid var(--faint);
     }
 
-    /* Abstention State */
-    .abstention-section {
-      padding: 1.75rem 0 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .abstention-title {
-      font-family: 'Newsreader', Georgia, serif;
-      font-style: italic;
-      font-size: 1.35rem;
-      color: var(--void);
-      margin-bottom: 0.65rem;
-    }
-
-    .abstention-desc {
-      font-family: 'Newsreader', Georgia, serif;
-      font-size: 1.08rem;
-      line-height: 1.75;
-      color: var(--muted);
-    }
-
-    /* Evidence Citations */
+    /* Evidence Drawer */
     .evidence-section {
-      margin-top: 1.75rem;
-      padding-top: 1.5rem;
+      margin-top: 2rem;
       border-top: 1px solid var(--faint);
+      padding-top: 1.25rem;
     }
 
     .evidence-header {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 0.72rem;
-      letter-spacing: 0.1em;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 0.95rem;
-      font-weight: 600;
+      margin-bottom: 0.85rem;
     }
 
     .evidence-list {
@@ -433,68 +653,43 @@
     }
 
     .evidence-item {
-      font-size: 0.84rem;
-      color: var(--ink);
-      line-height: 1.5;
-      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 2px;
-      transition: background 0.2s ease;
+      overflow: hidden;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.78rem;
     }
 
     .evidence-row {
       display: flex;
       align-items: center;
-      flex-wrap: wrap;
+      gap: 0.6rem;
+      padding: 0.65rem 0.9rem;
       cursor: pointer;
-      padding: 0.35rem 0.45rem;
-      border-radius: 2px;
-      transition: background 0.2s ease;
+      user-select: none;
+      transition: background 0.15s ease;
     }
 
     .evidence-row:hover {
-      background: var(--faint);
+      background: rgba(0, 0, 0, 0.025);
     }
 
-    .evidence-item .ev-num {
-      font-family: 'Fira Code', monospace;
-      color: var(--muted);
-      margin-right: 0.45rem;
+    body.midnight-mode .evidence-row:hover {
+      background: rgba(255, 255, 255, 0.04);
     }
 
-    .evidence-item .ev-pid {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .evidence-item .ev-sep {
-      color: var(--muted);
-      margin: 0 0.35rem;
-    }
-
-    .evidence-item .ev-meta {
-      color: var(--muted);
-    }
-
-    .evidence-item .ev-cue {
-      margin-left: auto;
-      font-family: 'Fira Code', monospace;
-      font-size: 0.72rem;
-      color: var(--muted);
-      transition: color 0.2s ease;
-      user-select: none;
-    }
-
-    .evidence-row:hover .ev-cue {
-      color: var(--ink);
-    }
+    .ev-num { color: var(--muted); }
+    .ev-pid { font-weight: 500; color: var(--ink); }
+    .ev-sep { color: var(--muted); opacity: 0.5; }
+    .ev-meta { color: var(--muted); flex: 1; }
+    .ev-cue { color: var(--accent); font-size: 0.72rem; }
 
     .evidence-drawer {
-      margin: 0.35rem 0 0.5rem 0.5rem;
-      padding: 0.65rem 0.9rem;
-      border-left: 2px solid var(--accent);
-      background: rgba(0, 0, 0, 0.025);
-      border-radius: 0 2px 2px 0;
-      animation: excerptFade 0.25s ease;
+      border-top: 1px solid var(--faint);
+      padding: 0.9rem 1rem;
+      background: rgba(0, 0, 0, 0.015);
+      animation: excerptFade 0.2s ease-out;
     }
 
     body.midnight-mode .evidence-drawer {
@@ -518,68 +713,224 @@
       scrollbar-width: thin;
     }
 
+    /* Abstention Box */
+    .abstention-box {
+      margin: 1.5rem 0 2rem;
+      border-left: 2px solid var(--void);
+      padding: 1.15rem 1.5rem;
+      background: rgba(140, 74, 58, 0.04);
+      border-radius: 0 3px 3px 0;
+    }
 
-    /* Footer Latency & System status */
-    .receipt-footer {
-      margin-top: 2rem;
-      display: flex;
-      justify-content: space-between;
+    body.midnight-mode .abstention-box {
+      background: rgba(196, 109, 93, 0.08);
+    }
+
+    .abstention-heading {
       font-family: 'Fira Code', monospace;
-      font-size: 0.75rem;
-      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--void);
+      margin-bottom: 0.55rem;
+      font-weight: 500;
     }
 
-    .backend-indicator {
-      display: inline-flex;
+    .abstention-text {
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: var(--ink);
+    }
+
+    /* Thinking State Card */
+    .thinking-turn {
+      display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      animation: turnFadeIn 0.3s ease-out;
     }
 
-    .indicator-dot {
-      width: 5px;
-      height: 5px;
+    .thinking-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--faint);
+      border-top-color: var(--ink);
       border-radius: 50%;
-      background: var(--evidence);
+      animation: spin 0.85s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Sticky Bottom Input Dock */
+    .chat-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-top: 1px solid var(--faint);
+      padding: 0.85rem 1.5rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 40;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.03);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .dock-container {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    /* Dynamic Follow-up Suggestions */
+    .followup-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.2rem;
+      scrollbar-width: none;
+    }
+
+    .followup-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .followup-chip {
+      background: var(--surface);
+      border: 1px solid var(--faint);
+      border-radius: 12px;
+      padding: 0.25rem 0.65rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.74rem;
+      color: var(--muted);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .followup-chip:hover {
+      border-color: var(--ink);
+      color: var(--ink);
+      transform: translateY(-1px);
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      width: 100%;
+    }
+
+    .input-box {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input-box::placeholder {
+      color: var(--muted);
+      opacity: 0.65;
+    }
+
+    .input-box:focus {
+      border-color: var(--ink);
+      box-shadow: 0 0 0 1px var(--ink);
+    }
+
+    .send-btn {
+      background: var(--ink);
+      color: var(--bg);
+      border: none;
+      border-radius: 4px;
+      padding: 0.75rem 1.5rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+      transform: none;
     }
   </style>
 </head>
 <body>
 
-  <!-- Top-Right Surrealist Theme Toggle -->
-  <div class="theme-bar">
-    <button type="button" class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle daylight / midnight parchment">
-      <span id="themeLabel">midnight</span>
-    </button>
-  </div>
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <span class="brand-dot"></span>
+      <span class="brand-title">
+        <span class="brand-title-full">The Corpus · Financial Form 10-K RAG</span>
+        <span class="brand-title-short">The Corpus</span>
+      </span>
+    </div>
+    <div class="nav-actions">
+      <button type="button" class="nav-btn nav-btn-danger" id="resetBtn" onclick="openResetModal()" title="Clear conversation history">
+        [ new session ]
+      </button>
+      <button type="button" class="nav-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle daylight / midnight parchment">
+        <span id="themeLabel">midnight</span>
+      </button>
+    </div>
+  </header>
 
   <main class="container">
     <!-- Surrealist Motif: Eye in Open Book -->
     <div class="motif-container" id="motifContainer">
       <!-- Open Eye in Book -->
       <svg id="eyeOpenSvg" class="motif-svg" viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-        <!-- Open Book Outline -->
         <path d="M 70 82 C 55 76, 25 76, 12 80 C 12 55, 12 35, 12 35 C 25 31, 55 31, 70 38 Z" stroke="var(--ink)" fill="none" />
         <path d="M 12 80 L 12 84 C 25 80, 55 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
         <path d="M 70 82 C 85 76, 115 76, 128 80 C 128 55, 128 35, 128 35 C 115 31, 85 31, 70 38 Z" stroke="var(--ink)" fill="none" />
         <path d="M 128 80 L 128 84 C 115 80, 85 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
         <line x1="70" y1="38" x2="70" y2="82" stroke="var(--ink)" />
-        
-        <!-- Subtle page rulings -->
         <line x1="24" y1="46" x2="56" y2="44" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="24" y1="53" x2="58" y2="51" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="24" y1="60" x2="52" y2="58" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="84" y1="44" x2="116" y2="46" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="82" y1="51" x2="116" y2="53" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="88" y1="58" x2="116" y2="60" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
-
-        <!-- Floating Open Eye -->
         <path d="M 44 26 C 54 12, 86 12, 96 26" stroke="var(--ink)" stroke-width="1.4" />
         <path d="M 44 26 C 54 40, 86 40, 96 26" stroke="var(--ink)" stroke-width="1.4" />
         <circle cx="70" cy="26" r="8" stroke="var(--ink)" stroke-width="1.2" fill="none" />
         <circle cx="70" cy="26" r="4.2" fill="var(--ink)" stroke="none" />
         <circle cx="68" cy="24" r="1.2" fill="var(--bg)" stroke="none" />
-
-        <!-- Surrealist Quiet Rays -->
         <line x1="70" y1="12" x2="70" y2="6" stroke="var(--muted)" stroke-width="1" />
         <line x1="57" y1="15" x2="53" y2="10" stroke="var(--muted)" stroke-width="1" />
         <line x1="83" y1="15" x2="87" y2="10" stroke="var(--muted)" stroke-width="1" />
@@ -587,21 +938,17 @@
 
       <!-- Closed Eye in Book (Abstention State) -->
       <svg id="eyeClosedSvg" class="motif-svg" viewBox="0 0 140 100" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-        <!-- Open Book Outline -->
         <path d="M 70 82 C 55 76, 25 76, 12 80 C 12 55, 12 35, 12 35 C 25 31, 55 31, 70 38 Z" stroke="var(--ink)" fill="none" />
         <path d="M 12 80 L 12 84 C 25 80, 55 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
         <path d="M 70 82 C 85 76, 115 76, 128 80 C 128 55, 128 35, 128 35 C 115 31, 85 31, 70 38 Z" stroke="var(--ink)" fill="none" />
         <path d="M 128 80 L 128 84 C 115 80, 85 80, 70 86 L 70 82" stroke="var(--muted)" stroke-width="0.9" />
         <line x1="70" y1="38" x2="70" y2="82" stroke="var(--ink)" />
-
         <line x1="24" y1="46" x2="56" y2="44" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="24" y1="53" x2="58" y2="51" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="24" y1="60" x2="52" y2="58" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="84" y1="44" x2="116" y2="46" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="82" y1="51" x2="116" y2="53" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
         <line x1="88" y1="58" x2="116" y2="60" stroke="var(--muted)" stroke-width="0.7" opacity="0.5" />
-
-        <!-- Closed Sleeping Eyelid -->
         <path d="M 44 26 C 54 36, 86 36, 96 26" stroke="var(--void)" stroke-width="1.5" />
         <line x1="54" y1="31" x2="51" y2="37" stroke="var(--void)" stroke-width="1.1" />
         <line x1="62" y1="33" x2="61" y2="40" stroke="var(--void)" stroke-width="1.1" />
@@ -613,135 +960,206 @@
       <span class="motif-caption" id="motifCaption">the watching eye</span>
     </div>
 
-    <!-- Query Input Section -->
-    <form id="askForm" onsubmit="handleAsk(event)">
-      <label for="queryInput" class="headline">ask something of the corpus</label>
-      <div class="input-wrapper">
-        <input 
-          type="text" 
-          id="queryInput" 
-          autocomplete="off" 
-          spellcheck="false" 
-          placeholder="e.g. What was NVIDIA's revenue concentration in fiscal 2024?" 
-          required
-        />
-      </div>
+    <!-- Welcome Hero (Shown initially or on new session) -->
+    <div class="welcome-hero" id="welcomeHero">
+      <h1 class="headline">ask something of the corpus</h1>
+      <p class="sub-headline">
+        Institutional-grade Form 10-K intelligence powered by LangGraph, balanced entity dispatch, and FlashRank cross-encoder confidence gating.
+      </p>
 
-      <!-- Surrealist Whispers / Quick Prompts -->
-      <div class="whispers">
+      <div class="starter-whispers">
         <span class="whisper-link" onclick="prefill('What were NVIDIA Compute and Networking segment revenue figures in fiscal 2024?')">NVIDIA segment revenue</span>
         <span>•</span>
         <span class="whisper-link" onclick="prefill('Compare Apple and Tesla supply chain and tariff risk factor disclosures in Item 1A.')">Apple vs Tesla tariff risks</span>
         <span>•</span>
-        <span class="whisper-link" onclick="prefill('According to Microsoft\'s 10-K, what was reported for Azure revenue growth?')">Microsoft Azure growth</span>
+        <span class="whisper-link" onclick="prefill('According to Microsoft 10-K, what was reported for Azure revenue growth?')">Microsoft Azure growth</span>
         <span>•</span>
         <span class="whisper-link" onclick="prefill('What was Tesla revenue from Optimus robot in 2024?')">test unreleased product</span>
       </div>
+    </div>
 
-      <div class="button-row">
-        <button type="submit" id="askBtn" class="ask-btn">ask</button>
-      </div>
-    </form>
+    <!-- Multi-Turn Conversation Thread -->
+    <div class="chat-thread" id="chatThread"></div>
 
-    <!-- Output Section (Hidden initially) -->
-    <section id="resultsContainer" style="display: none;">
-      <!-- Receipt Style Metadata Row -->
-      <div class="receipt">
-        <div class="receipt-row">
-          <span class="receipt-cell"><span class="k">route:</span> <span class="v" id="metaRoute">—</span></span>
-          <span class="receipt-cell"><span class="k">score:</span> <span class="v" id="metaScore">—</span></span>
-        </div>
-        <div class="receipt-row">
-          <span class="receipt-cell"><span class="k">tier:</span> <span class="v tier-label" id="metaTier">—</span></span>
-          <span class="receipt-cell"><span class="k">tokens:</span> <span class="v" id="metaTokens">—</span></span>
-        </div>
-        <div class="receipt-row">
-          <span class="receipt-cell"><span class="k">critic:</span> <span class="v" id="metaCritic">—</span></span>
-          <span class="receipt-cell"><span class="k">cost:</span> <span class="v" id="metaCost">—</span></span>
-        </div>
-      </div>
-
-      <!-- Grounded Answer Text -->
-      <div class="answer-section" id="answerSection">
-        <div class="answer-action-bar" id="answerActionBar">
-          <button type="button" class="copy-btn" id="copyBtn" onclick="copyAnswerText()">[ copy answer ]</button>
-        </div>
-        <div class="answer-text" id="answerBody"></div>
-      </div>
-
-      <!-- Abstention Clean State -->
-      <div class="abstention-section" id="abstentionSection" style="display: none;">
-        <div class="abstention-title">no evidence found</div>
-        <div class="abstention-desc" id="abstentionDesc">
-          The corpus contains no verified evidence answering this question. The Cross-Encoder scored all candidate passages below the relevance threshold.
-        </div>
-      </div>
-
-      <!-- Citations List -->
-      <div class="evidence-section" id="evidenceSection" style="display: none;">
-        <div class="evidence-header">evidence</div>
-        <ol class="evidence-list" id="evidenceList"></ol>
-      </div>
-
-      <!-- Footer Latency -->
-      <div class="receipt-footer">
-        <span class="backend-indicator"><span class="indicator-dot"></span> corpus connected</span>
-        <span id="metaLatency">latency: —</span>
-      </div>
-    </section>
   </main>
 
+  <!-- Sticky Floating Input Dock -->
+  <footer class="chat-dock">
+    <div class="dock-container">
+      <!-- Dynamic follow-up chips -->
+      <div class="followup-bar" id="followupBar" style="display: none;"></div>
+
+      <form id="askForm" class="input-row" onsubmit="handleAsk(event)">
+        <input 
+          type="text" 
+          id="queryInput" 
+          class="input-box" 
+          autocomplete="off" 
+          spellcheck="false" 
+          placeholder="Ask a question or explore a follow-up..." 
+          required
+        />
+        <button type="submit" id="askBtn" class="send-btn">Consult</button>
+      </form>
+    </div>
+  </footer>
+
+  <!-- Editorial Modal for Reset Confirmation -->
+  <div class="modal-backdrop" id="resetModal" onclick="handleModalBackdropClick(event)">
+    <div class="editorial-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-kicker">Session Management</div>
+      <h3 class="modal-title" id="modalTitle">Reset Conversation?</h3>
+      <p class="modal-desc">This will archive the current dialogue and clear retrieved 10-K citation history to start a fresh inquiry.</p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-cancel" onclick="closeResetModal()">Keep Dialogue</button>
+        <button type="button" class="modal-btn modal-btn-confirm" id="confirmResetBtn" onclick="confirmResetSession()">Clear Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editorial Toast Notification -->
+  <div class="editorial-toast" id="editorialToast">
+    <span class="toast-dot" id="toastDot"></span>
+    <span id="toastMsg">Session cleared</span>
+  </div>
+
   <script>
-    // Robust API base resolving: works seamlessly on file:/// and http://127.0.0.1:8000
-    const API_BASE = (window.location.protocol === 'file:') ? 'http://127.0.0.1:8000' : '';
+    const API_BASE = window.location.origin;
+    let conversationHistory = [];
+    let turnsData = [];
+    let currentTurnIndex = 0;
 
-    let lastRawAnswer = '';
-
-    // Surrealist Midnight / Daylight Theme Toggle
+    // Theme Management
     function initTheme() {
-      const saved = localStorage.getItem('corpus_theme');
-      const lbl = document.getElementById('themeLabel');
-      if (saved === 'midnight') {
+      const isMidnight = localStorage.getItem('corpus_theme') === 'midnight';
+      if (isMidnight) {
         document.body.classList.add('midnight-mode');
-        if (lbl) lbl.textContent = 'daylight';
+        document.getElementById('themeLabel').textContent = 'daylight';
       } else {
         document.body.classList.remove('midnight-mode');
-        if (lbl) lbl.textContent = 'midnight';
+        document.getElementById('themeLabel').textContent = 'midnight';
       }
     }
 
     function toggleTheme() {
       const isMidnight = document.body.classList.toggle('midnight-mode');
-      const lbl = document.getElementById('themeLabel');
-      if (lbl) lbl.textContent = isMidnight ? 'daylight' : 'midnight';
       localStorage.setItem('corpus_theme', isMidnight ? 'midnight' : 'daylight');
+      document.getElementById('themeLabel').textContent = isMidnight ? 'daylight' : 'midnight';
     }
 
-    // Call immediately on script execution
     initTheme();
 
-    // Copy Answer Functionality
-    function copyAnswerText() {
-      if (!lastRawAnswer) return;
-      navigator.clipboard.writeText(lastRawAnswer).then(() => {
-        const btn = document.getElementById('copyBtn');
-        if (btn) {
-          btn.textContent = '[ copied ]';
-          btn.style.color = 'var(--evidence)';
-          setTimeout(() => {
-            btn.textContent = '[ copy answer ]';
-            btn.style.color = '';
-          }, 2000);
-        }
+    function prefill(text) {
+      const input = document.getElementById('queryInput');
+      input.value = text;
+      input.focus();
+    }
+
+    // Toast Notification
+    let toastTimeout = null;
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('editorialToast');
+      const dot = document.getElementById('toastDot');
+      const msg = document.getElementById('toastMsg');
+      if (!toast || !msg) return;
+
+      msg.textContent = message;
+      if (type === 'error') {
+        dot.className = 'toast-dot toast-error';
+      } else {
+        dot.className = 'toast-dot';
+      }
+
+      toast.classList.add('is-visible');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('is-visible');
+      }, 3000);
+    }
+
+    // Custom Editorial Modal Management
+    function openResetModal() {
+      if (conversationHistory.length === 0) {
+        showToast('Dialogue is already fresh', 'info');
+        const input = document.getElementById('queryInput');
+        if (input) input.focus();
+        return;
+      }
+      const modal = document.getElementById('resetModal');
+      if (modal) {
+        modal.classList.add('is-active');
+        document.body.style.overflow = 'hidden';
+        const confirmBtn = document.getElementById('confirmResetBtn');
+        if (confirmBtn) confirmBtn.focus();
+      }
+    }
+
+    function closeResetModal() {
+      const modal = document.getElementById('resetModal');
+      if (modal) {
+        modal.classList.remove('is-active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    function handleModalBackdropClick(e) {
+      if (e.target.id === 'resetModal') {
+        closeResetModal();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeResetModal();
+      }
+    });
+
+    function confirmResetSession() {
+      closeResetModal();
+      doResetSession();
+      showToast('Conversation cleared · Ready for new inquiry', 'info');
+    }
+
+    function doResetSession() {
+      conversationHistory = [];
+      turnsData = [];
+      currentTurnIndex = 0;
+
+      document.getElementById('chatThread').innerHTML = '';
+      document.getElementById('welcomeHero').style.display = 'block';
+      document.getElementById('followupBar').style.display = 'none';
+      document.getElementById('followupBar').innerHTML = '';
+      
+      const eyeOpen = document.getElementById('eyeOpenSvg');
+      const eyeClosed = document.getElementById('eyeClosedSvg');
+      const caption = document.getElementById('motifCaption');
+      eyeOpen.style.display = 'block';
+      eyeClosed.style.display = 'none';
+      caption.textContent = 'the watching eye';
+
+      const input = document.getElementById('queryInput');
+      input.value = '';
+      input.focus();
+    }
+
+    function copyTurnAnswer(btn, turnIdx) {
+      const turn = turnsData[turnIdx];
+      if (!turn || !turn.draft_answer) return;
+      navigator.clipboard.writeText(turn.draft_answer).then(() => {
+        btn.textContent = '[ copied ]';
+        btn.style.color = 'var(--evidence)';
+        setTimeout(() => {
+          btn.textContent = '[ copy answer ]';
+          btn.style.color = '';
+        }, 2000);
       }).catch(err => {
         console.error('Clipboard copy failed:', err);
       });
     }
 
-    // Interactive Citation Excerpt Drawer Toggle
-    function toggleEvidence(idx) {
-      const drawer = document.getElementById(`evDrawer-${idx}`);
-      const cue = document.getElementById(`evCue-${idx}`);
+    function toggleEvidence(turnIdx, citeIdx) {
+      const drawer = document.getElementById(`evDrawer-${turnIdx}-${citeIdx}`);
+      const cue = document.getElementById(`evCue-${turnIdx}-${citeIdx}`);
       if (!drawer) return;
       if (drawer.style.display === 'none' || drawer.style.display === '') {
         drawer.style.display = 'block';
@@ -752,10 +1170,47 @@
       }
     }
 
-    function prefill(text) {
-      const input = document.getElementById('queryInput');
-      input.value = text;
-      input.focus();
+    function updateFollowupSuggestions(query, answer) {
+      const bar = document.getElementById('followupBar');
+      bar.innerHTML = '';
+
+      const qLower = query.toLowerCase();
+      let suggestions = [];
+
+      if (qLower.includes('revenue') || qLower.includes('sales') || qLower.includes('segment')) {
+        suggestions = [
+          'What about their operating margin and profitability?',
+          'How does that compare to fiscal 2023?',
+          'What were their capital expenditures (CapEx)?',
+          'What primary risk factors were disclosed in Item 1A?'
+        ];
+      } else if (qLower.includes('risk') || qLower.includes('tariff') || qLower.includes('supplier')) {
+        suggestions = [
+          'Did they mention any antitrust or regulatory investigations?',
+          'What was reported regarding international sales exposure?',
+          'What financial impact did management estimate?'
+        ];
+      } else {
+        suggestions = [
+          'Break down their revenue and operating margin',
+          'How does that compare to fiscal 2023?',
+          'What risk factors were disclosed in Item 1A?'
+        ];
+      }
+
+      suggestions.forEach(s => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'followup-chip';
+        chip.textContent = s;
+        chip.onclick = () => {
+          prefill(s);
+          document.getElementById('askForm').requestSubmit();
+        };
+        bar.appendChild(chip);
+      });
+
+      bar.style.display = 'flex';
     }
 
     async function handleAsk(e) {
@@ -769,20 +1224,47 @@
       const eyeOpen = document.getElementById('eyeOpenSvg');
       const eyeClosed = document.getElementById('eyeClosedSvg');
       const caption = document.getElementById('motifCaption');
-      const resultsContainer = document.getElementById('resultsContainer');
-      const answerSection = document.getElementById('answerSection');
-      const abstentionSection = document.getElementById('abstentionSection');
-      const evidenceSection = document.getElementById('evidenceSection');
-      const evidenceList = document.getElementById('evidenceList');
+      const welcomeHero = document.getElementById('welcomeHero');
+      const chatThread = document.getElementById('chatThread');
 
-      // Calm loading state: dim the motif slightly, disable button
+      // Hide welcome hero on first question
+      if (welcomeHero) welcomeHero.style.display = 'none';
+
+      // Lock UI
       btn.disabled = true;
       motif.classList.add('is-loading');
-
-      // Reset eye to open initially while waiting
       eyeOpen.style.display = 'block';
       eyeClosed.style.display = 'none';
       caption.textContent = 'consulting the corpus...';
+
+      const thisTurnIdx = currentTurnIndex++;
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Append User Query Card
+      const userCard = document.createElement('div');
+      userCard.className = 'chat-turn user-turn';
+      userCard.innerHTML = `
+        <div class="user-meta-bar">
+          <span>QUERY · TURN ${thisTurnIdx + 1}</span>
+          <span>${timeStr}</span>
+        </div>
+        <div class="user-query-text">${query.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+      `;
+      chatThread.appendChild(userCard);
+
+      // Append Thinking Indicator Card
+      const thinkingCard = document.createElement('div');
+      thinkingCard.className = 'chat-turn thinking-turn';
+      thinkingCard.id = `thinking-${thisTurnIdx}`;
+      thinkingCard.innerHTML = `
+        <div class="thinking-spinner"></div>
+        <span id="thinkingLabel-${thisTurnIdx}">dispatching multi-agent financial pipeline...</span>
+      `;
+      chatThread.appendChild(thinkingCard);
+
+      // Scroll smoothly into view
+      thinkingCard.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      input.value = '';
 
       const startTime = performance.now();
 
@@ -790,15 +1272,25 @@
         const res = await fetch(`${API_BASE}/api/query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query })
+          body: JSON.stringify({
+            query: query,
+            chat_history: conversationHistory
+          })
         });
 
         if (!res.ok) {
-          throw new Error('Server returned ' + res.status);
+          throw new Error('Server returned HTTP ' + res.status);
         }
 
         const data = await res.json();
         const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+
+        // Store turn data
+        turnsData[thisTurnIdx] = data;
+
+        // Remove thinking indicator
+        const th = document.getElementById(`thinking-${thisTurnIdx}`);
+        if (th) th.remove();
 
         // Parse metrics
         const route = data.route || 'pinpoint_retrieval';
@@ -808,12 +1300,11 @@
         const tokens = data.total_tokens || 0;
         const cost = data.total_cost_usd !== undefined ? '$' + Number(data.total_cost_usd).toFixed(6) : '$0.000000';
 
-        // Determine Confidence Tier & Critic status
         let tierLabel = '';
         let tierColor = '';
         let criticLabel = '';
 
-        if (!isRelevant || numScore < 0.25 || data.final_status === 'ABSTAINED') {
+        if (!isRelevant || numScore < 0.25 || data.final_status === 'ABSTAINED' || data.final_status === 'ABSTAINED_PRE_FLIGHT') {
           tierLabel = 'abstention';
           tierColor = 'var(--void)';
           criticLabel = 'bypassed (fast abstention)';
@@ -827,53 +1318,62 @@
           criticLabel = (route === 'simple_direct') ? 'bypassed (fast path)' : (data.critic_score ? `invoked (${data.critic_score}/5)` : 'invoked');
         }
 
-        // Populate Receipt Row
-        document.getElementById('metaRoute').textContent = route;
-        document.getElementById('metaScore').textContent = score;
-        
-        const tierElem = document.getElementById('metaTier');
-        tierElem.textContent = tierLabel;
-        tierElem.style.color = tierColor;
+        const assistantCard = document.createElement('div');
+        assistantCard.className = 'chat-turn assistant-turn';
 
-        document.getElementById('metaTokens').textContent = tokens.toLocaleString();
-        document.getElementById('metaCritic').textContent = criticLabel;
-        document.getElementById('metaCost').textContent = cost;
-        document.getElementById('metaLatency').textContent = `latency: ${duration}s`;
+        // Check if query was contextualized / rewritten
+        let contextPillHtml = '';
+        if (data.was_rewritten && data.standalone_query && data.standalone_query.toLowerCase() !== query.toLowerCase()) {
+          contextPillHtml = `
+            <div class="context-pill">
+              <span class="pill-label">↳ resolved search:</span>
+              <span class="pill-text">${data.standalone_query.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+            </div>
+          `;
+        }
 
-        resultsContainer.style.display = 'block';
-
-        // Handle Abstention vs. Grounded Answer
-        if (tierLabel === 'abstention' || data.final_status === 'ABSTAINED') {
-          // Eye closes
+        if (tierLabel === 'abstention' || data.final_status === 'ABSTAINED' || data.final_status === 'ABSTAINED_PRE_FLIGHT') {
           eyeOpen.style.display = 'none';
           eyeClosed.style.display = 'block';
           caption.textContent = 'the eye closed';
 
-          answerSection.style.display = 'none';
-          abstentionSection.style.display = 'block';
-          evidenceSection.style.display = 'none';
-          if (data.draft_answer) {
-            document.getElementById('abstentionDesc').textContent = data.draft_answer;
-          }
+          const abstentionMsg = data.draft_answer || 'I could not find relevant evidence in the indexed Form 10-K filings to answer this question.';
+
+          assistantCard.innerHTML = `
+            ${contextPillHtml}
+            <div class="receipt">
+              <div class="receipt-row">
+                <div class="receipt-cell"><span class="k">route</span><span class="v">${route}</span></div>
+                <div class="receipt-cell"><span class="k">confidence</span><span class="tier-label" style="color: ${tierColor}">${tierLabel}</span></div>
+                <div class="receipt-cell"><span class="k">tokens</span><span class="v">${tokens.toLocaleString()}</span></div>
+                <div class="receipt-cell"><span class="k">cost</span><span class="v">${cost}</span></div>
+                <div class="receipt-cell"><span class="k">latency</span><span class="v">${duration}s</span></div>
+              </div>
+            </div>
+            <div class="abstention-box">
+              <div class="abstention-heading">Abstention Notice</div>
+              <div class="abstention-text">${abstentionMsg}</div>
+            </div>
+          `;
+
+          // Keep in conversation history
+          conversationHistory.push({ role: 'user', content: query });
+          conversationHistory.push({ role: 'assistant', content: abstentionMsg });
+
         } else {
-          // Eye remains open and watching
           eyeOpen.style.display = 'block';
           eyeClosed.style.display = 'none';
           caption.textContent = 'the watching eye';
 
-          answerSection.style.display = 'block';
-          abstentionSection.style.display = 'none';
-
-          // Format answer text with Markdown
           const rawAnswer = data.draft_answer || '';
-          lastRawAnswer = rawAnswer;
+          let parsedHtml = '';
           if (typeof marked !== 'undefined' && marked.parse) {
-            document.getElementById('answerBody').innerHTML = marked.parse(rawAnswer);
+            parsedHtml = marked.parse(rawAnswer);
           } else {
-            document.getElementById('answerBody').textContent = rawAnswer;
+            parsedHtml = `<p>${rawAnswer.replace(/\n/g, '<br>')}</p>`;
           }
 
-          // Format Citations
+          // Citations
           let citations = data.citations || [];
           if (citations.length === 0 && rawAnswer) {
             const pattern = /\[([A-Za-z0-9\.\s]+)[,\s]+([^,\]]+)\]/gi;
@@ -883,17 +1383,15 @@
             }
           }
 
+          let evidenceHtml = '';
           if (citations.length > 0) {
-            evidenceSection.style.display = 'block';
-            evidenceList.innerHTML = '';
-            
             const candidateChunks = data.reranked_chunks || data.retrieved_chunks || [];
+            let listItems = '';
 
-            citations.forEach((c, idx) => {
+            citations.forEach((c, cIdx) => {
               const entityId = c.ticker || c.paper_id || '10-K';
               const sectionName = c.section || 'General';
 
-              // Find matching chunk text from candidates
               let matched = candidateChunks.find(ch => {
                 const m = ch.metadata || {};
                 const tkrMatch = m.ticker && (m.ticker.toLowerCase() === entityId.toLowerCase());
@@ -902,40 +1400,79 @@
                 return (tkrMatch || pidMatch) && secMatch;
               });
 
-              if (!matched && candidateChunks[idx]) {
-                matched = candidateChunks[idx];
+              if (!matched && candidateChunks[cIdx]) {
+                matched = candidateChunks[cIdx];
               }
 
               const rawExcerpt = matched ? matched.text.trim() : `Evidence passage resolved from ${entityId} (${sectionName}).`;
               const safeExcerpt = rawExcerpt.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-              const li = document.createElement('li');
-              li.className = 'evidence-item';
-              li.innerHTML = `
-                <div class="evidence-row" onclick="toggleEvidence(${idx})">
-                  <span class="ev-num">[${idx + 1}]</span>
-                  <span class="ev-pid">${entityId}</span>
-                  <span class="ev-sep">—</span>
-                  <span class="ev-meta">${sectionName}${c.page ? ', p.' + c.page : ''}</span>
-                  <span class="ev-cue" id="evCue-${idx}">+ excerpt</span>
-                </div>
-                <div class="evidence-drawer" id="evDrawer-${idx}" style="display: none;">
-                  <div class="evidence-excerpt">${safeExcerpt}</div>
-                </div>
+              listItems += `
+                <li class="evidence-item">
+                  <div class="evidence-row" onclick="toggleEvidence(${thisTurnIdx}, ${cIdx})">
+                    <span class="ev-num">[${cIdx + 1}]</span>
+                    <span class="ev-pid">${entityId}</span>
+                    <span class="ev-sep">—</span>
+                    <span class="ev-meta">${sectionName}${c.page ? ', p.' + c.page : ''}</span>
+                    <span class="ev-cue" id="evCue-${thisTurnIdx}-${cIdx}">+ excerpt</span>
+                  </div>
+                  <div class="evidence-drawer" id="evDrawer-${thisTurnIdx}-${cIdx}" style="display: none;">
+                    <div class="evidence-excerpt">${safeExcerpt}</div>
+                  </div>
+                </li>
               `;
-              evidenceList.appendChild(li);
             });
-          } else {
-            evidenceSection.style.display = 'none';
+
+            evidenceHtml = `
+              <div class="evidence-section">
+                <div class="evidence-header">Disclosed 10-K Evidence (${citations.length})</div>
+                <ul class="evidence-list">${listItems}</ul>
+              </div>
+            `;
           }
+
+          assistantCard.innerHTML = `
+            ${contextPillHtml}
+            <div class="receipt">
+              <div class="receipt-row">
+                <div class="receipt-cell"><span class="k">route</span><span class="v">${route}</span></div>
+                <div class="receipt-cell"><span class="k">score</span><span class="v">${score}</span></div>
+                <div class="receipt-cell"><span class="k">confidence</span><span class="tier-label" style="color: ${tierColor}">${tierLabel}</span></div>
+                <div class="receipt-cell"><span class="k">tokens</span><span class="v">${tokens.toLocaleString()}</span></div>
+                <div class="receipt-cell"><span class="k">cost</span><span class="v">${cost}</span></div>
+                <div class="receipt-cell"><span class="k">latency</span><span class="v">${duration}s</span></div>
+              </div>
+            </div>
+            <div class="answer-box">
+              <div class="answer-header">
+                <span class="answer-title">synthesis</span>
+                <button type="button" class="copy-btn" onclick="copyTurnAnswer(this, ${thisTurnIdx})">[ copy answer ]</button>
+              </div>
+              <div class="answer-text">${parsedHtml}</div>
+            </div>
+            ${evidenceHtml}
+          `;
+
+          // Add to conversation history
+          conversationHistory.push({ role: 'user', content: query });
+          conversationHistory.push({ role: 'assistant', content: rawAnswer });
+
+          // Update follow-up suggestion chips
+          updateFollowupSuggestions(query, rawAnswer);
         }
 
+        chatThread.appendChild(assistantCard);
+        assistantCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
       } catch (err) {
+        const th = document.getElementById(`thinking-${thisTurnIdx}`);
+        if (th) th.remove();
         caption.textContent = 'the eye rests in silence';
-        alert('Could not consult the corpus. Ensure the backend server is running: ' + err.message);
+        showToast('Could not consult the corpus: ' + err.message, 'error');
       } finally {
         btn.disabled = false;
         motif.classList.remove('is-loading');
+        input.focus();
       }
     }
   </script>
